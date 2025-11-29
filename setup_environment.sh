@@ -127,6 +127,16 @@ export HF_HOME="$HF_HOME"
 export NLTK_DATA="$NLTK_DATA"
 export TORCH_HOME="$TORCH_HOME"
 
+# Set temporary directories to scratch to avoid home quota issues
+# Derive base path from HF_HOME (assuming it's in scratch)
+SCRATCH_BASE=$(dirname "$HF_HOME")
+export TMPDIR="$SCRATCH_BASE/tmp"
+export PIP_CACHE_DIR="$SCRATCH_BASE/pip_cache"
+
+# Create temp directories
+mkdir -p "$TMPDIR"
+mkdir -p "$PIP_CACHE_DIR"
+
 echo "Environment variables set:"
 echo "  HF_HOME=$HF_HOME"
 echo "  NLTK_DATA=$NLTK_DATA"
