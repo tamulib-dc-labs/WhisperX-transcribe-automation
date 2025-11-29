@@ -29,7 +29,6 @@ if [ -f "config.yaml" ]; then
     HF_HOME=$(grep "hf_home:" config.yaml | awk '{print $2}' | tr -d '"' | tr -d "'")
     NLTK_DATA=$(grep "nltk_data:" config.yaml | awk '{print $2}' | tr -d '"' | tr -d "'")
     TORCH_HOME=$(grep "torch_home:" config.yaml | awk '{print $2}' | tr -d '"' | tr -d "'")
-    PYTHONPATH_VALUE=$(grep "pythonpath:" config.yaml | awk '{print $2}' | tr -d '"' | tr -d "'")
     VENV_ACTIVATE=$(grep "venv_activate:" config.yaml | awk '{print $2}' | tr -d '"' | tr -d "'")
     MODULE_LOAD=$(grep "module_load_cmd:" config.yaml | awk '{print $2}' | tr -d '"' | tr -d "'" | sed 's/^"\(.*\)"$/\1/')
     ORAL_INPUT=$(grep "oral_input:" config.yaml | awk '{print $2}' | tr -d '"' | tr -d "'")
@@ -53,7 +52,6 @@ source "$VENV_ACTIVATE"
 export HF_HOME="$HF_HOME"
 export NLTK_DATA="$NLTK_DATA"
 export TORCH_HOME="$TORCH_HOME"
-export PYTHONPATH="$PYTHONPATH_VALUE${PYTHONPATH:+:$PYTHONPATH}"
 
 # Create NLTK data directory if it doesn't exist
 mkdir -p "$NLTK_DATA"
@@ -62,7 +60,6 @@ echo "Environment variables:"
 echo "  HF_HOME=$HF_HOME"
 echo "  NLTK_DATA=$NLTK_DATA"
 echo "  TORCH_HOME=$TORCH_HOME"
-echo "  PYTHONPATH=$PYTHONPATH"
 echo ""
 
 # IMPORTANT: Enable offline mode to prevent internet access attempts

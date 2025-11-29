@@ -121,22 +121,7 @@ nano config.yaml
 - `paths.hf_home` - HuggingFace cache directory
 - `paths.nltk_data` - NLTK data directory  
 - `paths.torch_home` - PyTorch cache directory
-- `paths.pythonpath` - Python packages directory
 - `credentials.github_token` - Your GitHub Personal Access Token
-- `credentials.netid_username` - Your NetID username
-
-See [Configuration Reference](#configuration-reference) below for all options.
-
-#### Step 3: Run Environment Setup (One-Time)
-
-This script will:
-- Create cache directories (HF_HOME, NLTK_DATA, TORCH_HOME)
-- Create Python virtual environment in `venv/`
-- Install all dependencies from `requirements.txt`
-- Create `activate_env.sh` helper for future sessions
-- Verify all packages installed correctly
-
-```bash
 bash setup_environment.sh
 ```
 
@@ -267,7 +252,6 @@ paths:
   hf_home: "/scratch/user/YOUR_NETID/hf_cache"
   nltk_data: "/scratch/user/YOUR_NETID/nltk_data"
   torch_home: "/scratch/user/YOUR_NETID/torch_cache"
-  pythonpath: "/scratch/user/YOUR_NETID/python_packages"
   
   # Data directories (relative to project root)
   oral_input: "data/oral_input"

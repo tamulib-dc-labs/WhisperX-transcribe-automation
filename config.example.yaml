@@ -17,9 +17,6 @@ paths:
   # PyTorch cache directory
   torch_home: "/scratch/user/jvk_chaitanya/torch_cache"
   
-  # Python packages directory (for PYTHONPATH)
-  pythonpath: "/scratch/user/jvk_chaitanya/python_packages"
-  
   # Working directories - organized under data/ folder
   # These are relative to the project root or absolute paths
   oral_input: "data/oral_input"     # or absolute: "/full/path/to/WhisperX-transcribe-automation/data/oral_input"

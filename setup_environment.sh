@@ -11,11 +11,49 @@ echo ""
 
 # Load Python 3.9+ module (required for pandas 2.x and whisperx)
 echo "Loading Python 3.9 module..."
-ml GCCcore/10.3.0 Python/3.9
+if ml GCCcore/10.3.0 Python/3.9 2>/dev/null; then
+    echo "✓ Python 3.9 module loaded successfully"
+else
+    echo "⚠ Warning: Could not load Python/3.9 module"
+    echo "Trying alternative: Python 3.9 from system..."
+    # Try to use system python3 if module doesn't exist
+    if command -v python3.9 &> /dev/null; then
+        alias python=python3.9
+        echo "✓ Using python3.9 from system"
+    elif command -v python3 &> /dev/null; then
+        PYTHON_VER=$(python3 --version | grep -oP '\d+\.\d+' | head -1)
+        MAJOR=$(echo $PYTHON_VER | cut -d. -f1)
+        MINOR=$(echo $PYTHON_VER | cut -d. -f2)
+        if [ "$MAJOR" -ge 3 ] && [ "$MINOR" -ge 9 ]; then
+            alias python=python3
+            echo "✓ Using python3 (version $PYTHON_VER)"
+        else
+            echo "ERROR: Python 3.9+ not found. Current python3 version: $PYTHON_VER"
+            echo "Please install Python 3.9 or higher."
+            exit 1
+        fi
+    else
+        echo "ERROR: No suitable Python found. Please install Python 3.9+."
+        exit 1
+    fi
+fi
 
 # Verify Python version
 PYTHON_VERSION=$(python --version 2>&1)
 echo "Python version: $PYTHON_VERSION"
+
+# Check if Python version is 3.9+
+PYTHON_VER_NUM=$(python -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
+MAJOR=$(echo $PYTHON_VER_NUM | cut -d. -f1)
+MINOR=$(echo $PYTHON_VER_NUM | cut -d. -f2)
+
+if [ "$MAJOR" -lt 3 ] || ([ "$MAJOR" -eq 3 ] && [ "$MINOR" -lt 9 ]); then
+    echo "ERROR: Python 3.9+ is required, but found Python $PYTHON_VER_NUM"
+    echo "Please load Python 3.9 or higher module."
+    exit 1
+fi
+
+echo "✓ Python version check passed"
 echo ""
 
 # Load configuration
@@ -29,7 +67,6 @@ fi
 HF_HOME=$(grep "hf_home:" config.yaml | awk '{print $2}' | tr -d '"' | tr -d "'")
 NLTK_DATA=$(grep "nltk_data:" config.yaml | awk '{print $2}' | tr -d '"' | tr -d "'")
 TORCH_HOME=$(grep "torch_home:" config.yaml | awk '{print $2}' | tr -d '"' | tr -d "'")
-PYTHONPATH_VALUE=$(grep "pythonpath:" config.yaml | awk '{print $2}' | tr -d '"' | tr -d "'")
 VENV_ACTIVATE=$(grep "venv_activate:" config.yaml | awk '{print $2}' | tr -d '"' | tr -d "'" | sed 's/\$SCRATCH/$SCRATCH/')
 VENV_PATH=$(echo "$VENV_ACTIVATE" | sed 's|/bin/activate||' | sed 's|\\Scripts\\activate||')
 
@@ -43,7 +80,6 @@ echo "Configuration loaded from config.yaml"
 echo "  HF_HOME: $HF_HOME"
 echo "  NLTK_DATA: $NLTK_DATA"
 echo "  TORCH_HOME: $TORCH_HOME"
-echo "  PYTHONPATH: $PYTHONPATH_VALUE"
 echo "  Virtual Environment: $VENV_PATH"
 echo ""
 
@@ -64,7 +100,6 @@ echo "================================================"
 create_dir "$HF_HOME"
 create_dir "$NLTK_DATA"
 create_dir "$TORCH_HOME"
-create_dir "$PYTHONPATH_VALUE"
 echo ""
 
 # Step 0.2: Create virtual environment
@@ -91,20 +126,18 @@ source "$VENV_PATH/bin/activate"
 export HF_HOME="$HF_HOME"
 export NLTK_DATA="$NLTK_DATA"
 export TORCH_HOME="$TORCH_HOME"
-export PYTHONPATH="$PYTHONPATH_VALUE${PYTHONPATH:+:$PYTHONPATH}"
 
 echo "Environment variables set:"
 echo "  HF_HOME=$HF_HOME"
 echo "  NLTK_DATA=$NLTK_DATA"
 echo "  TORCH_HOME=$TORCH_HOME"
-echo "  PYTHONPATH=$PYTHONPATH"
 echo ""
 
 # Upgrade pip first
 echo "Upgrading pip..."
 pip install --upgrade pip
 
-# Install requirements
+# Install requirements (all packages go into venv)
 echo "Installing requirements from requirements.txt..."
 pip install -r requirements.txt
 
@@ -130,7 +163,6 @@ fi
 HF_HOME=$(grep "hf_home:" config.yaml | awk '{print $2}' | tr -d '"' | tr -d "'")
 NLTK_DATA=$(grep "nltk_data:" config.yaml | awk '{print $2}' | tr -d '"' | tr -d "'")
 TORCH_HOME=$(grep "torch_home:" config.yaml | awk '{print $2}' | tr -d '"' | tr -d "'")
-PYTHONPATH_VALUE=$(grep "pythonpath:" config.yaml | awk '{print $2}' | tr -d '"' | tr -d "'")
 VENV_PATH=$(grep "venv_activate:" config.yaml | awk '{print $2}' | tr -d '"' | tr -d "'" | sed 's|/bin/activate||')
 
 # Activate virtual environment
@@ -140,14 +172,12 @@ source "$VENV_PATH/bin/activate"
 export HF_HOME="$HF_HOME"
 export NLTK_DATA="$NLTK_DATA"
 export TORCH_HOME="$TORCH_HOME"
-export PYTHONPATH="$PYTHONPATH_VALUE${PYTHONPATH:+:$PYTHONPATH}"
 
 echo "Environment activated!"
 echo "  Virtual env: $VENV_PATH"
 echo "  HF_HOME: $HF_HOME"
 echo "  NLTK_DATA: $NLTK_DATA"
 echo "  TORCH_HOME: $TORCH_HOME"
-echo "  PYTHONPATH: $PYTHONPATH"
 EOF
 
 chmod +x activate_env.sh
