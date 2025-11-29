@@ -12,6 +12,12 @@ import warnings
 import argparse
 import multiprocessing as mp
 from concurrent.futures import ProcessPoolExecutor, as_completed
+import functools
+
+# Monkey patch torch.load to fix "weights_only" error in PyTorch 2.6+
+# This is needed because pyannote.audio and other libraries haven't updated yet
+original_torch_load = torch.load
+torch.load = functools.partial(original_torch_load, weights_only=False)
 
 warnings.filterwarnings('ignore')
 

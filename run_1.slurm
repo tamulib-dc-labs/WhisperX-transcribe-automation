@@ -21,7 +21,13 @@ echo "================================================"
 echo ""
 
 # Get the directory where this script is located
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# When running via sbatch, we should use SLURM_SUBMIT_DIR
+if [ -n "$SLURM_SUBMIT_DIR" ]; then
+    SCRIPT_DIR="$SLURM_SUBMIT_DIR"
+else
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
 cd "$SCRIPT_DIR"
 
 # Load Python from config (simple parsing)
@@ -35,6 +41,8 @@ if [ -f "config.yaml" ]; then
     ORAL_OUTPUT=$(grep "oral_output:" config.yaml | awk '{print $2}' | tr -d '"' | tr -d "'")
 else
     echo "ERROR: config.yaml not found!"
+    echo "Please create it by running: cp config.example.yaml config.yaml"
+    echo "Then edit config.yaml with your specific settings (tokens, paths, etc.)"
     exit 1
 fi
 
