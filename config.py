@@ -89,7 +89,6 @@ def _apply_env_overrides(config: Dict[str, Any]) -> Dict[str, Any]:
         config['paths']['hf_home'] = os.getenv('HF_HOME', config['paths'].get('hf_home'))
         config['paths']['nltk_data'] = os.getenv('NLTK_DATA', config['paths'].get('nltk_data'))
         config['paths']['torch_home'] = os.getenv('TORCH_HOME', config['paths'].get('torch_home'))
-        config['paths']['pythonpath'] = os.getenv('PYTHONPATH', config['paths'].get('pythonpath'))
     
     # Credentials overrides (for security)
     if 'credentials' in config:

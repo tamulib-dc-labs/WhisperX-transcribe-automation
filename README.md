@@ -128,7 +128,7 @@ bash setup_environment.sh
 **Output**:
 ```
 Step 0.1: Creating cache directories
-  ✓ Creates HF_HOME, NLTK_DATA, TORCH_HOME, PYTHONPATH
+  ✓ Creates HF_HOME, NLTK_DATA, TORCH_HOME
 Step 0.2: Creating virtual environment
   ✓ Creates venv/
 Step 0.3: Installing Python dependencies
