@@ -61,6 +61,13 @@ export HF_HOME="$HF_HOME"
 export NLTK_DATA="$NLTK_DATA"
 export TORCH_HOME="$TORCH_HOME"
 
+# Add NVIDIA library paths from the virtual environment to LD_LIBRARY_PATH
+# This is necessary for PyTorch to find cuDNN/cuBLAS libraries installed via pip
+echo "Configuring LD_LIBRARY_PATH for NVIDIA libraries..."
+VENV_SITE_PACKAGES=$(python -c "import site; print(site.getsitepackages()[0])")
+export LD_LIBRARY_PATH="$VENV_SITE_PACKAGES/nvidia/cudnn/lib:$VENV_SITE_PACKAGES/nvidia/cublas/lib:$VENV_SITE_PACKAGES/nvidia/cudart/lib:$LD_LIBRARY_PATH"
+echo "Updated LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
+
 # Create NLTK data directory if it doesn't exist
 mkdir -p "$NLTK_DATA"
 
