@@ -5,7 +5,7 @@ transformers
 accelerate
 whisperx
 torch
-dropbox
-pandas
+torchaudio
 PyYAML
 smbprotocol
+openpyxl
