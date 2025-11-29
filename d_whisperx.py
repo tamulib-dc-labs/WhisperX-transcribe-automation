@@ -2,6 +2,14 @@ import os
 import whisperx
 import torch
 from config import load_config
+import functools
+import warnings
+
+# Monkey patch torch.load to fix "weights_only" error in PyTorch 2.6+
+original_torch_load = torch.load
+torch.load = functools.partial(original_torch_load, weights_only=False)
+
+warnings.filterwarnings('ignore')
 
 # Load configuration
 config = load_config()

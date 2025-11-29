@@ -285,19 +285,6 @@ def transcribe_directory(
     logger.info(f"Transcription complete! Successful: {successful}, Failed: {failed}")
     
     # Cleanup models
-    del model
-    if align_model is not None:
-        del align_model
-    gc.collect()
-
-# Move this function to module level so it can be pickled
-def _process_gpu_batch(args):
-    """Process a batch of files on a specific GPU (module-level function for pickling)"""
-    gpu_id, file_batch, output_path, model_name, model_dir, batch_size, compute_type, language, max_line_width, max_line_count, highlight_words = args
-    
-    # Set CUDA_VISIBLE_DEVICES to make only this GPU visible
-    os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
-    
     # Determine model path
     model_path = model_dir if model_dir else model_name
     
