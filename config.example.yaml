@@ -113,5 +113,5 @@ pipeline:
   # Module load command for HPC cluster
   module_load_cmd: "ml GCCcore/10.3.0 FFmpeg CUDA Python"
   
-  # Virtual environment activation path
-  venv_activate: "$SCRATCH/libraries/dlvenv/bin/activate"
+  # Virtual environment activation path (inside project directory)
+  venv_activate: "venv/bin/activate"  # Local venv folder

@@ -42,6 +42,7 @@ The project uses the following directory organization:
 ```
 parent-directory/
 ├── WhisperX-transcribe-automation/    # Main project directory
+│   ├── venv/                          # Python virtual environment (gitignored)
 │   ├── data/                          # Data folder (created during setup)
 │   │   ├── oral_input/                # Input audio files
 │   │   └── oral_output/               # Transcription outputs
@@ -55,6 +56,10 @@ parent-directory/
 │   ├── git_upload.py                  # Upload script
 │   ├── pipeline_2.py                  # Full pipeline
 │   ├── d_whisperx.py                  # Model downloader
+│   ├── setup_environment.sh           # Step 0 setup script
+│   ├── setup_directories.sh           # Directory creation script
+│   ├── activate_env.sh                # Environment activation helper
+│   ├── run_1.slurm                    # Slurm job script
 │   ├── requirements.txt               # Python dependencies
 │   └── README.md                      # This file
 │
@@ -115,7 +120,7 @@ nano config.yaml  # or use your preferred editor
 - `paths.nltk_data` - NLTK data directory
 - `paths.torch_home` - PyTorch cache directory
 - `paths.pythonpath` - Python packages directory
-- `pipeline.venv_activate` - Virtual environment path
+- `pipeline.venv_activate` - Virtual environment path (default: `venv/bin/activate` for local venv)
 
 #### 0.3: Run Environment Setup Script
 

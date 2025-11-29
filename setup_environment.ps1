@@ -33,6 +33,12 @@ $PYTHONPATH_VALUE = Get-ConfigValue "pythonpath"
 $VENV_ACTIVATE = Get-ConfigValue "venv_activate"
 $VENV_PATH = $VENV_ACTIVATE -replace '/bin/activate', '' -replace '\\Scripts\\activate', ''
 
+# Convert relative venv path to absolute if needed
+if (-not [System.IO.Path]::IsPathRooted($VENV_PATH)) {
+    $VENV_PATH = Join-Path $PSScriptRoot $VENV_PATH
+    $VENV_ACTIVATE = Join-Path $VENV_PATH "Scripts\activate"
+}
+
 Write-Host "Configuration loaded from config.yaml" -ForegroundColor Green
 Write-Host "  HF_HOME: $HF_HOME"
 Write-Host "  NLTK_DATA: $NLTK_DATA"

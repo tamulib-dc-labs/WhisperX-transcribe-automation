@@ -21,7 +21,14 @@ HF_HOME=$(grep "hf_home:" config.yaml | awk '{print $2}' | tr -d '"' | tr -d "'"
 NLTK_DATA=$(grep "nltk_data:" config.yaml | awk '{print $2}' | tr -d '"' | tr -d "'")
 TORCH_HOME=$(grep "torch_home:" config.yaml | awk '{print $2}' | tr -d '"' | tr -d "'")
 PYTHONPATH_VALUE=$(grep "pythonpath:" config.yaml | awk '{print $2}' | tr -d '"' | tr -d "'")
-VENV_PATH=$(grep "venv_activate:" config.yaml | awk '{print $2}' | tr -d '"' | tr -d "'" | sed 's|/bin/activate||')
+VENV_ACTIVATE=$(grep "venv_activate:" config.yaml | awk '{print $2}' | tr -d '"' | tr -d "'" | sed 's/\$SCRATCH/$SCRATCH/')
+VENV_PATH=$(echo "$VENV_ACTIVATE" | sed 's|/bin/activate||' | sed 's|\\Scripts\\activate||')
+
+# Convert relative venv path to absolute if needed
+if [[ "$VENV_PATH" != /* ]] && [[ "$VENV_PATH" != \$* ]]; then
+    VENV_PATH="$(pwd)/$VENV_PATH"
+    VENV_ACTIVATE="$VENV_PATH/bin/activate"
+fi
 
 echo "Configuration loaded from config.yaml"
 echo "  HF_HOME: $HF_HOME"

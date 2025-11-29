@@ -25,7 +25,7 @@ wheels/
 .installed.cfg
 *.egg
 
-# Virtual Environment
+# Virtual Environment (in project directory)
 venv/
 ENV/
 env/
