@@ -222,6 +222,7 @@ def main():
     if not clear_directory(oral_output_path, 5, f"Clear files in {oral_output_path}"):
         sys.exit(1)
 
+
     # Step 6: Run Network Download Script (Replaces Dropbox)
     download_cmd = [
         "python",
@@ -235,6 +236,8 @@ def main():
         "--local-path", oral_input_path,
         "--max-folders", str(config["google_sheets"].get("max_folders", 20))
     ]
+    if model_dir:
+        download_cmd.extend(["--model-dir", model_dir])
 
     log_cmd_display = download_cmd.copy()
     log_cmd_display[5] = "********"
