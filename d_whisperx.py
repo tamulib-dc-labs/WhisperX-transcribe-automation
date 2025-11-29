@@ -1,9 +1,20 @@
 import os
 import whisperx
 import torch
+import yaml
 
-# Set HF cache
-os.environ['HF_HOME'] = '/scratch/user/jvk_chaitanya/hf_cache'
+# Load cache paths from config.yaml
+config_path = os.path.join(os.path.dirname(__file__), "config", "config.yaml")
+with open(config_path, 'r') as f:
+    config = yaml.safe_load(f)
+
+# Set HuggingFace cache
+hf_cache = config.get("cache", {}).get("huggingface_cache", "./hf_cache")
+os.environ['HF_HOME'] = hf_cache
+
+# Set model cache (if needed by your workflow)
+model_cache = config.get("cache", {}).get("model_cache", "./model_cache")
+os.environ['MODEL_CACHE'] = model_cache
 
 # Set offline mode to False for downloading
 os.environ['HF_HUB_OFFLINE'] = '0'

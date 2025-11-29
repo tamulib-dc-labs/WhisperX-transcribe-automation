@@ -232,8 +232,25 @@ def main():
     ):
         sys.exit(1)
 
-    # Step 7: Run sbatch job AND Monitor
+
+
+    # Step 7: Update cache paths in slurm job file before submission
     slurm_job_path = os.path.abspath(config.get("slurm_job_path", "run_1.slurm"))
+    # Read slurm job file
+    with open(slurm_job_path, "r") as f:
+        slurm_content = f.read()
+
+    # Replace cache paths using config values
+    cache = config.get("cache", {})
+    slurm_content = slurm_content.replace("/scratch/user/jvk_chaitanya/hf_cache", cache.get("huggingface_cache", "./hf_cache"))
+    slurm_content = slurm_content.replace("/scratch/user/jvk_chaitanya/python_packages", cache.get("python_cache", "./.pycache"))
+    slurm_content = slurm_content.replace("/scratch/user/jvk_chaitanya/nltk_data", cache.get("nltk_data", "./nltk_data"))
+    slurm_content = slurm_content.replace("/scratch/user/jvk_chaitanya/hf_cache/hub/models--Systran--faster-whisper-large-v3/snapshots/edaa852ec7e145841d8ffdb056a99866b5f0a478", cache.get("model_cache", "./model_cache"))
+
+    # Overwrite the main slurm job file with updated content
+    with open(slurm_job_path, "w") as f:
+        f.write(slurm_content)
+
     job_id = submit_slurm_job(
         slurm_job_path,
         7,

@@ -24,3 +24,8 @@ git:
   token: "your_github_token"                # GitHub personal access token
 
 # Add any other configuration options below as needed
+
+cache:
+  python_cache: "./.pycache"                # Path to Python cache directory
+  huggingface_cache: "./hf_cache"           # Path to HuggingFace cache directory
+  model_cache: "./model_cache"              # Path to model cache directory
