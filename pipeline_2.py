@@ -162,10 +162,7 @@ def main():
     if cache.get("model_cache"): os.environ['MODEL_CACHE'] = cache["model_cache"]
     if model_dir: os.environ['MODEL_DIR'] = model_dir
 
-    # Step 3.5: Inject model_dir into download and slurm job commands if needed
-    # Update download_cmd if model_dir is required
-    if model_dir:
-        download_cmd.extend(["--model-dir", model_dir])
+    # Step 3.5: model_dir will be injected into download_cmd after its definition below
 
     # --- PRE-CHECK: Get Password ---
     smb_password = config["smb"].get("password")
