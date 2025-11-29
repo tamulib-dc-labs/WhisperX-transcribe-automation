@@ -5,3 +5,4 @@ whisperx
 torch
 pandas
 pyyaml
+smbprotocol

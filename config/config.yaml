@@ -26,6 +26,10 @@ git:
 # Add any other configuration options below as needed
 
 cache:
-  python_cache: "./.pycache"                # Path to Python cache directory
-  huggingface_cache: "./hf_cache"           # Path to HuggingFace cache directory
-  model_cache: "./model_cache"              # Path to model cache directory
+  python_cache: "/absolute/path/to/pycache"                # Full path to Python cache directory
+  huggingface_cache: "/absolute/path/to/hf_cache"           # Full path to HuggingFace cache directory
+  model_cache: "/absolute/path/to/model_cache"              # Full path to model cache directory
+  nltk_data: "/absolute/path/to/nltk_data"                  # Full path to NLTK data directory
+
+model:
+  model_dir: "/absolute/path/to/model_dir"                 # Full path to model directory

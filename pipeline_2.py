@@ -153,6 +153,20 @@ def main():
     config_path = os.path.join(os.path.dirname(__file__), "config", "config.yaml")
     config = load_config(config_path)
 
+    # --- Set environment variables for all cache paths and model_dir ---
+    cache = config.get("cache", {})
+    model_dir = config.get("model", {}).get("model_dir", None)
+    if cache.get("huggingface_cache"): os.environ['HF_HOME'] = cache["huggingface_cache"]
+    if cache.get("python_cache"): os.environ['PYTHONPATH'] = cache["python_cache"]
+    if cache.get("nltk_data"): os.environ['NLTK_DATA'] = cache["nltk_data"]
+    if cache.get("model_cache"): os.environ['MODEL_CACHE'] = cache["model_cache"]
+    if model_dir: os.environ['MODEL_DIR'] = model_dir
+
+    # Step 3.5: Inject model_dir into download and slurm job commands if needed
+    # Update download_cmd if model_dir is required
+    if model_dir:
+        download_cmd.extend(["--model-dir", model_dir])
+
     # --- PRE-CHECK: Get Password ---
     smb_password = config["smb"].get("password")
     if not smb_password:
@@ -240,12 +254,15 @@ def main():
     with open(slurm_job_path, "r") as f:
         slurm_content = f.read()
 
-    # Replace cache paths using config values
+    # Replace cache paths and model_dir using config values
     cache = config.get("cache", {})
     slurm_content = slurm_content.replace("/scratch/user/jvk_chaitanya/hf_cache", cache.get("huggingface_cache", "./hf_cache"))
     slurm_content = slurm_content.replace("/scratch/user/jvk_chaitanya/python_packages", cache.get("python_cache", "./.pycache"))
     slurm_content = slurm_content.replace("/scratch/user/jvk_chaitanya/nltk_data", cache.get("nltk_data", "./nltk_data"))
     slurm_content = slurm_content.replace("/scratch/user/jvk_chaitanya/hf_cache/hub/models--Systran--faster-whisper-large-v3/snapshots/edaa852ec7e145841d8ffdb056a99866b5f0a478", cache.get("model_cache", "./model_cache"))
+    if model_dir:
+        # Replace any model-dir argument or path in slurm job file
+        slurm_content = re.sub(r'(--model-dir\s+)("[^"]*"|\S+)', f'\1"{model_dir}"', slurm_content)
 
     # Overwrite the main slurm job file with updated content
     with open(slurm_job_path, "w") as f:
