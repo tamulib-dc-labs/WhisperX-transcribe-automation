@@ -1,0 +1,117 @@
+# WhisperX Automation Pipeline - User Configuration Template
+# 
+# SETUP INSTRUCTIONS:
+# 1. Copy this file to 'config.yaml' in the same directory
+# 2.  Replace all placeholder values with your actual settings
+# 3. Make sure config.yaml is added to .gitignore (already done)
+# 4. Never commit config.yaml to version control
+
+# File Paths
+paths:
+  # HuggingFace cache directory
+  hf_home: "/scratch/user/jvk_chaitanya/hf_cache"
+  
+  # NLTK data directory
+  nltk_data: "/scratch/user/jvk_chaitanya/nltk_data"
+  
+  # PyTorch cache directory
+  torch_home: "/scratch/user/jvk_chaitanya/torch_cache"
+  
+  # Python packages directory (for PYTHONPATH)
+  pythonpath: "/scratch/user/jvk_chaitanya/python_packages"
+  
+  # Working directories - organized under data/ folder
+  # These are relative to the project root or absolute paths
+  oral_input: "data/oral_input"     # or absolute: "/full/path/to/WhisperX-transcribe-automation/data/oral_input"
+  oral_output: "data/oral_output"   # or absolute: "/full/path/to/WhisperX-transcribe-automation/data/oral_output"
+  
+  # Git repository - sibling directory to project (outside parent directory)
+  git_repo: "../git_repo"           # or absolute: "/full/path/to/git_repo"
+  
+  # Script paths (within the project directory)
+  download_script: "download_automation_3.py"       # or absolute path
+  slurm_script: "/scratch/user/jvk_chaitanya/libraries/run_1.slurm"
+  git_upload_script: "git_upload.py"                # or absolute path
+
+# Credentials (KEEP THIS FILE SECURE - ALREADY IN .gitignore)
+credentials:
+  # GitHub Personal Access Token (needs 'repo' or 'Contents: Write' permission)
+  github_token: "YOUR_GITHUB_TOKEN_HERE"
+  
+  # NetID for TAMU network access
+  netid_username: "jvk_chaitanya"
+  
+  # SMB/Network password (can also be set via SMB_PASSWORD environment variable)
+  smb_password: ""  # Leave empty to prompt at runtime
+
+# GitHub Repository Settings
+github:
+  owner: "tamulib-dc-labs"
+  repo_name: "edge-grant-json-and-vtts"
+  auth_username: "JvkChaitanya"
+  branch_prefix: "upload"
+
+# SMB/Network Share Settings
+smb:
+  server: "cifs.library.tamu.edu"
+  share: "digital_project_management"
+  base_path: "edge-grant/GB_38253_MP3s"
+
+# Google Sheets
+google_sheets:
+  # URL of the tracking spreadsheet
+  sheet_url: "https://docs.google.com/spreadsheets/d/16cHa57n7rJmS744nMH2dY2H4IKLP5fMeHJ0iY8w85EM/edit?usp=sharing"
+
+# WhisperX Processing Settings
+whisperx:
+  # Model size: tiny, base, small, medium, large-v2, large-v3, turbo
+  model_name: "large-v3"
+  
+  # Batch size for transcription (adjust based on GPU memory)
+  batch_size: 16
+  
+  # Compute type: float16 (GPU), float32 (CPU), int8
+  compute_type: "float16"
+  
+  # Language code (e.g., 'en', 'es', 'fr') or null for auto-detect
+  language: null
+  
+  # Enable word-level alignment
+  align: true
+  
+  # Model directory for offline use (optional)
+  model_dir: null
+  
+  # VTT subtitle formatting
+  vtt:
+    max_line_width: 42
+    max_line_count: 2
+    highlight_words: false
+  
+  # Multi-GPU settings
+  parallel:
+    enabled: false
+    num_gpus: null  # null = use all available
+
+# Model Download Settings (for d_whisperx.py)
+model_download:
+  # Languages to download alignment models for
+  alignment_languages:
+    - "en"
+    - "es"
+    - "fr"
+    - "de"
+
+# Pipeline Settings
+pipeline:
+  # How often to check job status (minutes)
+  check_interval_mins: 5
+  
+  # Maximum folders to download per run
+  max_folders: 20
+  
+  # Module load command for HPC cluster
+  module_load_cmd: "ml GCCcore/10.3.0 FFmpeg CUDA Python"
+  
+  # Virtual environment activation path
+  venv_activate: "$SCRATCH/libraries/dlvenv/bin/activate"
