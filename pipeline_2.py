@@ -5,6 +5,7 @@ Executes steps sequentially with logging after each completion
 Updated to use SMB/CIFS Network Share for downloads.
 """
 
+
 import subprocess
 import sys
 import os
@@ -12,6 +13,7 @@ import re
 import time
 import getpass
 from datetime import datetime
+import yaml
 
 # =================CONFIGURATION=================
 # Pipeline Settings
@@ -136,25 +138,32 @@ def monitor_job_status(job_id, check_interval_mins=5):
             print(f"\nJob {job_id} is no longer in squeue. Assuming completion.")
             return True
 
+def load_config(config_path):
+    with open(config_path, 'r') as f:
+        return yaml.safe_load(f)
+
 def main():
     print("\n" + "="*80)
     print("BATCH JOB PIPELINE - STARTING")
     print(f"Started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("="*80)
 
+
+    # Load config
+    config_path = os.path.join(os.path.dirname(__file__), "config", "config.yaml")
+    config = load_config(config_path)
+
     # --- PRE-CHECK: Get Password ---
-    # Try to get password from environment variable first (good for automation)
-    smb_password = os.environ.get('SMB_PASSWORD')
-    
+    smb_password = config["smb"].get("password")
     if not smb_password:
-        # If not in environment, ask interactively
-        print("\n[INPUT REQUIRED] Please enter password for Network Share access:")
-        try:
-            smb_password = getpass.getpass(f"Password for {NETID_USERNAME}: ")
-        except Exception as e:
-            print(f"Error getting password: {e}")
-            sys.exit(1)
-    
+        smb_password = os.environ.get('SMB_PASSWORD')
+        if not smb_password:
+            print("\n[INPUT REQUIRED] Please enter password for Network Share access:")
+            try:
+                smb_password = getpass.getpass(f"Password for {config['smb'].get('username', 'username')}: ")
+            except Exception as e:
+                print(f"Error getting password: {e}")
+                sys.exit(1)
     if not smb_password:
         print("Error: Password cannot be empty.")
         sys.exit(1)
@@ -167,7 +176,7 @@ def main():
         shell=True
     ):
         sys.exit(1)
-    
+
     # Step 2: Activate Python virtual environment
     if not run_command(
         "source $SCRATCH/libraries/dlvenv/bin/activate",
@@ -176,7 +185,7 @@ def main():
         shell=True
     ):
         sys.exit(1)
-    
+
     # Step 3: Set PYTHONPATH
     pythonpath_value = '/scratch/user/jvk_chaitanya/python_packages'
     existing_pythonpath = os.environ.get('PYTHONPATH', '')
@@ -184,54 +193,53 @@ def main():
         os.environ['PYTHONPATH'] = f"{pythonpath_value}:{existing_pythonpath}"
     else:
         os.environ['PYTHONPATH'] = pythonpath_value
-    
+
     log_step(3, "Set PYTHONPATH environment variable", "STARTED")
     print(f"PYTHONPATH={os.environ['PYTHONPATH']}")
     log_step(3, "Set PYTHONPATH environment variable", "COMPLETED")
-    
+
     # Step 4: Clear files in data/oral_input/
-    oral_input_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "data", "oral_input"))
+    oral_input_path = os.path.abspath(config["paths"]["oral_input"])
     if not clear_directory(oral_input_path, 4, f"Clear files in {oral_input_path}"):
         sys.exit(1)
 
     # Step 5: Clear files in data/oral_output/
-    oral_output_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "data", "oral_output"))
+    oral_output_path = os.path.abspath(config["paths"]["oral_output"])
     if not clear_directory(oral_output_path, 5, f"Clear files in {oral_output_path}"):
         sys.exit(1)
-    
+
     # Step 6: Run Network Download Script (Replaces Dropbox)
-    # Using the arguments defined in our previous "fetch_network_data.py" script
     download_cmd = [
         "python",
-        DOWNLOAD_SCRIPT_PATH,
-        "--sheet-url", SHEET_URL,
-        "--username", NETID_USERNAME,
-        "--password", smb_password,  # Passed safely from variable
-        "--server", SMB_SERVER,
-        "--share", SMB_SHARE,
-        "--base-path", SMB_BASE_PATH,
+        config.get("download_script_path", "download_automation_3.py"),
+        "--sheet-url", config["google_sheets"]["url"],
+        "--username", config["smb"]["username"],
+        "--password", smb_password,
+        "--server", config["smb"]["server"],
+        "--share", config["smb"]["share"],
+        "--base-path", config["smb"].get("base_path", ""),
         "--local-path", oral_input_path,
-        "--max-folders", "20"
+        "--max-folders", str(config["google_sheets"].get("max_folders", 20))
     ]
-    
-    # Mask password in logs just in case
+
     log_cmd_display = download_cmd.copy()
-    log_cmd_display[5] = "********" 
-    
+    log_cmd_display[5] = "********"
+
     if not run_command(
         download_cmd,
         6,
         "Run Network Download Script"
     ):
         sys.exit(1)
-    
-    # Step 7: Run sbatch run_1.slurm AND Monitor
+
+    # Step 7: Run sbatch job AND Monitor
+    slurm_job_path = os.path.abspath(config.get("slurm_job_path", "run_1.slurm"))
     job_id = submit_slurm_job(
-        "/scratch/user/jvk_chaitanya/libraries/run_1.slurm",
+        slurm_job_path,
         7,
-        "Submit batch job (run_1.slurm)"
+        f"Submit batch job ({slurm_job_path})"
     )
-    
+
     if not job_id:
         print("Failed to submit batch job. Exiting.")
         sys.exit(1)
@@ -240,9 +248,7 @@ def main():
     monitor_job_status(job_id, CHECK_INTERVAL_MINS)
 
     # Step 9: Trigger Git Upload (Only runs after monitor finishes)
-    # Step 9: Trigger Git Upload (Only runs after monitor finishes)
-    # Set git_repo path outside working dir
-    git_repo_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "git_repo"))
+    git_repo_path = os.path.abspath(config["paths"]["git_repo"])
     git_upload_cmd = [
         "python",
         os.path.abspath(os.path.join(os.path.dirname(__file__), "git_upload.py")),
@@ -255,10 +261,10 @@ def main():
         "Run Git_upload.py to upload files to github"
     ):
         sys.exit(1)
-    
+
     # Final Completion
     log_step(10, "All steps completed successfully", "COMPLETED")
-    
+
     print("\n" + "="*80)
     print("BATCH JOB PIPELINE - FINISHED")
     print(f"Completed at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
