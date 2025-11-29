@@ -12,12 +12,6 @@ import warnings
 import argparse
 import multiprocessing as mp
 from concurrent.futures import ProcessPoolExecutor, as_completed
-import functools
-
-# Monkey patch torch.load to fix "weights_only" error in PyTorch 2.6+
-# This is needed because pyannote.audio and other libraries haven't updated yet
-original_torch_load = torch.load
-torch.load = functools.partial(original_torch_load, weights_only=False)
 
 warnings.filterwarnings('ignore')
 
@@ -285,6 +279,19 @@ def transcribe_directory(
     logger.info(f"Transcription complete! Successful: {successful}, Failed: {failed}")
     
     # Cleanup models
+    del model
+    if align_model is not None:
+        del align_model
+    gc.collect()
+
+# Move this function to module level so it can be pickled
+def _process_gpu_batch(args):
+    """Process a batch of files on a specific GPU (module-level function for pickling)"""
+    gpu_id, file_batch, output_path, model_name, model_dir, batch_size, compute_type, language, max_line_width, max_line_count, highlight_words = args
+    
+    # Set CUDA_VISIBLE_DEVICES to make only this GPU visible
+    os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
+    
     # Determine model path
     model_path = model_dir if model_dir else model_name
     
@@ -512,7 +519,7 @@ if __name__ == "__main__":
             highlight_words=args.highlight_words
         )
     else:
-       transcribe_directory(
+        transcribe_directory(
             input_dir=args.input_dir,
             output_dir=args.output_dir,
             model_name=args.model,

@@ -4,8 +4,8 @@ langchain
 transformers
 accelerate
 whisperx
-torch
-torchaudio
+torch==2.5.1
+torchaudio==2.5.1
 PyYAML
 smbprotocol
 openpyxl
