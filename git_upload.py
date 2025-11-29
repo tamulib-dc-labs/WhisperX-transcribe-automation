@@ -1,9 +1,3 @@
-import subprocess
-import os
-import datetime
-import sys
-from config import load_config
-
 def git_standard_pipeline(
     source_data_folder,   # Where your files are NOW
     git_repo_folder,      # Where we will download the repo to
@@ -97,17 +91,32 @@ def git_standard_pipeline(
 # ==========================================
 # CONFIGURATION
 # ==========================================
+import subprocess
+import os
+import datetime
+import sys
+import yaml
+
+def load_config(config_path):
+    with open(config_path, 'r') as f:
+        return yaml.safe_load(f)
+
 if __name__ == "__main__":
-    # Load configuration from config.yaml
-    config = load_config()
-    
-    # Extract values from config
-    SOURCE_PATH = config['paths']['oral_output']
-    REPO_PATH = config['paths']['git_repo']
-    TOKEN = config['credentials']['github_token']
-    USER = config['github']['auth_username']
-    OWNER = config['github']['owner']
-    REPO = config['github']['repo_name']
+    # Load config file
+    config_path = os.path.join(os.path.dirname(__file__), "config", "config.yaml")
+    config = load_config(config_path)
+
+    # 1. WHERE YOUR DATA IS (The Source)
+    SOURCE_PATH = os.path.abspath(config["paths"]["oral_output"])
+
+    # 2. WHERE THE GIT REPO SHOULD BE (The Destination)
+    REPO_PATH = os.path.abspath(config["paths"]["git_repo"])
+
+    # 3. GITHUB DETAILS
+    TOKEN = config["git"]["token"]
+    USER = config["git"]["username"]
+    OWNER = config["git"]["owner"]
+    REPO = config["git"]["repo"]
 
     git_standard_pipeline(
         source_data_folder=SOURCE_PATH,

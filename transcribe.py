@@ -289,11 +289,15 @@ def _process_gpu_batch(args):
     """Process a batch of files on a specific GPU (module-level function for pickling)"""
     gpu_id, file_batch, output_path, model_name, model_dir, batch_size, compute_type, language, max_line_width, max_line_count, highlight_words = args
     
-    # Do NOT set CUDA_VISIBLE_DEVICES here as it conflicts with PyTorch initialization
-    # os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
+    # Set CUDA_VISIBLE_DEVICES to make only this GPU visible
+    os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
     
-    # Use specific device index
-    device = f"cuda:{gpu_id}"
+    # Determine model path
+    model_path = model_dir if model_dir else model_name
+    
+    # After setting CUDA_VISIBLE_DEVICES, the visible GPU becomes device index 0
+    # Use "cuda" instead of "cuda:0" for better compatibility
+    device = "cuda"
     model = whisperx.load_model(
         model_path, 
         device, 

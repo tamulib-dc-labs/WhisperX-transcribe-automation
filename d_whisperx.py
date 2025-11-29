@@ -1,38 +1,21 @@
 import os
 import whisperx
 import torch
-from config import load_config
 
-# Load configuration
-config = load_config()
-
-# Set HF cache from config
-os.environ['HF_HOME'] = config['paths']['hf_home']
+# Set HF cache
+os.environ['HF_HOME'] = '/scratch/user/jvk_chaitanya/hf_cache'
 
 # Set offline mode to False for downloading
 os.environ['HF_HUB_OFFLINE'] = '0'
 
-# Detect device
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-# Use appropriate compute type based on device
-# CPU requires float32, GPU can use int8 or float16
-if device == "cpu":
-    compute_type = "float32"
-    print("No GPU detected, using CPU with float32")
-else:
-    compute_type = "int8"  # int8 works on all GPUs, float16 needs newer GPUs
-    print(f"GPU detected, using {device} with {compute_type}")
-
-# Get model name from config
-model_name = config.get('whisperx', {}).get('model_name', 'large-v3')
-
-print(f"\nDownloading Whisper model: {model_name}...")
-model = whisperx.load_model(model_name, device, compute_type=compute_type)
+print("Downloading Whisper model...")
+model = whisperx.load_model("large-v3", device, compute_type="float16")
 print("Whisper model downloaded!")
 
 print("\nDownloading alignment models for common languages...")
-languages = config.get('model_download', {}).get('alignment_languages', ['en', 'es', 'fr', 'de'])
+languages = ["en", "es", "fr", "de"]  # Add languages you need
 
 for lang in languages:
     try:

@@ -12,35 +12,23 @@ import re
 import time
 import getpass
 from datetime import datetime
-from config import load_config
-
-# Load configuration
-config = load_config()
 
 # =================CONFIGURATION=================
-# Extract from config
-CHECK_INTERVAL_MINS = config['pipeline']['check_interval_mins']
+# Pipeline Settings
+CHECK_INTERVAL_MINS = 5
 
 # Network Share Settings
-DOWNLOAD_SCRIPT_PATH = config['paths']['download_script']
+# CHANGE THIS to the actual name of your script file
+DOWNLOAD_SCRIPT_PATH = "/scratch/user/jvk_chaitanya/libraries/speech_text/download_automation_3.py" 
 
 # SMB Connection Details
-SMB_SERVER = config['smb']['server']
-SMB_SHARE = config['smb']['share']
-SMB_BASE_PATH = config['smb']['base_path']
-NETID_USERNAME = config['credentials']['netid_username']
+SMB_SERVER = "cifs.library.tamu.edu"
+SMB_SHARE = "digital_project_management"  # <--- UPDATE THIS (e.g., 'projects', 'reserves', 'staff')
+SMB_BASE_PATH = "edge-grant/GB_38253_MP3s" # Path inside the share
+NETID_USERNAME = "jvk_chaitanya"
 
 # Google Sheet
-SHEET_URL = config['google_sheets']['sheet_url']
-
-# Paths
-ORAL_INPUT_PATH = config['paths']['oral_input']
-ORAL_OUTPUT_PATH = config['paths']['oral_output']
-SLURM_SCRIPT_PATH = config['paths']['slurm_script']
-GIT_UPLOAD_SCRIPT = config['paths']['git_upload_script']
-VENV_ACTIVATE = config['pipeline']['venv_activate']
-MODULE_LOAD_CMD = config['pipeline']['module_load_cmd']
-MAX_FOLDERS = str(config['pipeline']['max_folders'])
+SHEET_URL = "https://docs.google.com/spreadsheets/d/16cHa57n7rJmS744nMH2dY2H4IKLP5fMeHJ0iY8w85EM/edit?usp=sharing"
 # ===============================================
 
 def log_step(step_num, description, status="STARTED"):
@@ -171,33 +159,48 @@ def main():
         print("Error: Password cannot be empty.")
         sys.exit(1)
 
-    # Step 1: Run module load command
+    # Step 1: Run ml GCCcore/10.3.0 FFmpeg CUDA Python
     if not run_command(
-        MODULE_LOAD_CMD,
+        "ml GCCcore/10.3.0 FFmpeg CUDA Python",
         1,
-        f"Load modules ({MODULE_LOAD_CMD})",
+        "Load modules (GCCcore/10.3.0 FFmpeg CUDA Python)",
         shell=True
     ):
         sys.exit(1)
     
     # Step 2: Activate Python virtual environment
     if not run_command(
-        f"source {VENV_ACTIVATE}",
+        "source $SCRATCH/libraries/dlvenv/bin/activate",
         2,
         "Activate Python virtual environment",
         shell=True
     ):
         sys.exit(1)
     
-    # Step 3: Clear files in oral_input/
-    if not clear_directory(ORAL_INPUT_PATH, 3, f"Clear files in {ORAL_INPUT_PATH}"):
+    # Step 3: Set PYTHONPATH
+    pythonpath_value = '/scratch/user/jvk_chaitanya/python_packages'
+    existing_pythonpath = os.environ.get('PYTHONPATH', '')
+    if existing_pythonpath:
+        os.environ['PYTHONPATH'] = f"{pythonpath_value}:{existing_pythonpath}"
+    else:
+        os.environ['PYTHONPATH'] = pythonpath_value
+    
+    log_step(3, "Set PYTHONPATH environment variable", "STARTED")
+    print(f"PYTHONPATH={os.environ['PYTHONPATH']}")
+    log_step(3, "Set PYTHONPATH environment variable", "COMPLETED")
+    
+    # Step 4: Clear files in data/oral_input/
+    oral_input_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "data", "oral_input"))
+    if not clear_directory(oral_input_path, 4, f"Clear files in {oral_input_path}"):
+        sys.exit(1)
+
+    # Step 5: Clear files in data/oral_output/
+    oral_output_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "data", "oral_output"))
+    if not clear_directory(oral_output_path, 5, f"Clear files in {oral_output_path}"):
         sys.exit(1)
     
-    # Step 4: Clear files in oral_output/
-    if not clear_directory(ORAL_OUTPUT_PATH, 4, f"Clear files in {ORAL_OUTPUT_PATH}"):
-        sys.exit(1)
-    
-    # Step 5: Run Network Download Script (Replaces Dropbox)
+    # Step 6: Run Network Download Script (Replaces Dropbox)
+    # Using the arguments defined in our previous "fetch_network_data.py" script
     download_cmd = [
         "python",
         DOWNLOAD_SCRIPT_PATH,
@@ -207,8 +210,8 @@ def main():
         "--server", SMB_SERVER,
         "--share", SMB_SHARE,
         "--base-path", SMB_BASE_PATH,
-        "--local-path", ORAL_INPUT_PATH,
-        "--max-folders", MAX_FOLDERS
+        "--local-path", oral_input_path,
+        "--max-folders", "20"
     ]
     
     # Mask password in logs just in case
@@ -217,40 +220,44 @@ def main():
     
     if not run_command(
         download_cmd,
-        5,
+        6,
         "Run Network Download Script"
     ):
         sys.exit(1)
     
-    # Step 6: Run sbatch script AND Monitor
+    # Step 7: Run sbatch run_1.slurm AND Monitor
     job_id = submit_slurm_job(
-        SLURM_SCRIPT_PATH,
-        6,
-        f"Submit batch job ({SLURM_SCRIPT_PATH})"
+        "/scratch/user/jvk_chaitanya/libraries/run_1.slurm",
+        7,
+        "Submit batch job (run_1.slurm)"
     )
     
     if not job_id:
         print("Failed to submit batch job. Exiting.")
         sys.exit(1)
 
-    # Step 7: Monitor the job
+    # Step 8: Monitor the job
     monitor_job_status(job_id, CHECK_INTERVAL_MINS)
 
-    # Step 8: Trigger Git Upload (Only runs after monitor finishes)
+    # Step 9: Trigger Git Upload (Only runs after monitor finishes)
+    # Step 9: Trigger Git Upload (Only runs after monitor finishes)
+    # Set git_repo path outside working dir
+    git_repo_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "git_repo"))
     git_upload_cmd = [
         "python",
-        GIT_UPLOAD_SCRIPT
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "git_upload.py")),
+        "--repo-path", git_repo_path
     ]
 
     if not run_command(
         git_upload_cmd,
-        8,
+        9,
         "Run Git_upload.py to upload files to github"
     ):
         sys.exit(1)
     
     # Final Completion
-    log_step(9, "All steps completed successfully", "COMPLETED")
+    log_step(10, "All steps completed successfully", "COMPLETED")
     
     print("\n" + "="*80)
     print("BATCH JOB PIPELINE - FINISHED")

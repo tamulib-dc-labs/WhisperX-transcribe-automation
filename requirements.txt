@@ -1,11 +1,7 @@
-langchain_huggingface
-langchain-core
 langchain
 transformers
 accelerate
 whisperx
-torch==2.3.1
-torchaudio==2.3.1
-PyYAML
-smbprotocol
-openpyxl
+torch
+pandas
+pyyaml
