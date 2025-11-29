@@ -38,7 +38,6 @@ ORAL_INPUT_PATH = config['paths']['oral_input']
 ORAL_OUTPUT_PATH = config['paths']['oral_output']
 SLURM_SCRIPT_PATH = config['paths']['slurm_script']
 GIT_UPLOAD_SCRIPT = config['paths']['git_upload_script']
-PYTHONPATH_VALUE = config['paths']['pythonpath']
 VENV_ACTIVATE = config['pipeline']['venv_activate']
 MODULE_LOAD_CMD = config['pipeline']['module_load_cmd']
 MAX_FOLDERS = str(config['pipeline']['max_folders'])
@@ -190,26 +189,15 @@ def main():
     ):
         sys.exit(1)
     
-    # Step 3: Set PYTHONPATH
-    existing_pythonpath = os.environ.get('PYTHONPATH', '')
-    if existing_pythonpath:
-        os.environ['PYTHONPATH'] = f"{PYTHONPATH_VALUE}:{existing_pythonpath}"
-    else:
-        os.environ['PYTHONPATH'] = PYTHONPATH_VALUE
-    
-    log_step(3, "Set PYTHONPATH environment variable", "STARTED")
-    print(f"PYTHONPATH={os.environ['PYTHONPATH']}")
-    log_step(3, "Set PYTHONPATH environment variable", "COMPLETED")
-    
-    # Step 4: Clear files in oral_input/
-    if not clear_directory(ORAL_INPUT_PATH, 4, f"Clear files in {ORAL_INPUT_PATH}"):
+    # Step 3: Clear files in oral_input/
+    if not clear_directory(ORAL_INPUT_PATH, 3, f"Clear files in {ORAL_INPUT_PATH}"):
         sys.exit(1)
     
-    # Step 5: Clear files in oral_output/
-    if not clear_directory(ORAL_OUTPUT_PATH, 5, f"Clear files in {ORAL_OUTPUT_PATH}"):
+    # Step 4: Clear files in oral_output/
+    if not clear_directory(ORAL_OUTPUT_PATH, 4, f"Clear files in {ORAL_OUTPUT_PATH}"):
         sys.exit(1)
     
-    # Step 6: Run Network Download Script (Replaces Dropbox)
+    # Step 5: Run Network Download Script (Replaces Dropbox)
     download_cmd = [
         "python",
         DOWNLOAD_SCRIPT_PATH,
@@ -229,15 +217,15 @@ def main():
     
     if not run_command(
         download_cmd,
-        6,
+        5,
         "Run Network Download Script"
     ):
         sys.exit(1)
     
-    # Step 7: Run sbatch script AND Monitor
+    # Step 6: Run sbatch script AND Monitor
     job_id = submit_slurm_job(
         SLURM_SCRIPT_PATH,
-        7,
+        6,
         f"Submit batch job ({SLURM_SCRIPT_PATH})"
     )
     
@@ -245,10 +233,10 @@ def main():
         print("Failed to submit batch job. Exiting.")
         sys.exit(1)
 
-    # Step 8: Monitor the job
+    # Step 7: Monitor the job
     monitor_job_status(job_id, CHECK_INTERVAL_MINS)
 
-    # Step 9: Trigger Git Upload (Only runs after monitor finishes)
+    # Step 8: Trigger Git Upload (Only runs after monitor finishes)
     git_upload_cmd = [
         "python",
         GIT_UPLOAD_SCRIPT
@@ -256,13 +244,13 @@ def main():
 
     if not run_command(
         git_upload_cmd,
-        9,
+        8,
         "Run Git_upload.py to upload files to github"
     ):
         sys.exit(1)
     
     # Final Completion
-    log_step(10, "All steps completed successfully", "COMPLETED")
+    log_step(9, "All steps completed successfully", "COMPLETED")
     
     print("\n" + "="*80)
     print("BATCH JOB PIPELINE - FINISHED")
