@@ -110,8 +110,8 @@ pipeline:
   # Maximum folders to download per run
   max_folders: 20
   
-  # Module load command for HPC cluster
-  module_load_cmd: "ml GCCcore/10.3.0 FFmpeg CUDA Python"
+  # Module load command for HPC cluster (Python 3.9+ required for pandas 2.x)
+  module_load_cmd: "ml GCCcore/10.3.0 FFmpeg CUDA Python/3.9"
   
   # Virtual environment activation path (inside project directory)
   venv_activate: "venv/bin/activate"  # Local venv folder

@@ -9,6 +9,15 @@ echo "Step 0: Environment Setup (One-time)"
 echo "================================================"
 echo ""
 
+# Load Python 3.9+ module (required for pandas 2.x and whisperx)
+echo "Loading Python 3.9 module..."
+ml GCCcore/10.3.0 Python/3.9
+
+# Verify Python version
+PYTHON_VERSION=$(python --version 2>&1)
+echo "Python version: $PYTHON_VERSION"
+echo ""
+
 # Load configuration
 if [ ! -f "config.yaml" ]; then
     echo "Error: config.yaml not found!"

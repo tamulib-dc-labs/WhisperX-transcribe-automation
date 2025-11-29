@@ -41,7 +41,9 @@ fi
 
 # Load modules
 echo "Loading modules..."
-eval $MODULE_LOAD
+# modules needed for running DL jobs. Module restore will also work
+#module restore dl
+ml GCCcore/10.3.0 FFmpeg CUDA Python/3.9
 
 # Activate virtual environment
 echo "Activating virtual environment..."

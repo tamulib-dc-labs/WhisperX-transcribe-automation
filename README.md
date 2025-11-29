@@ -92,7 +92,7 @@ python pipeline_2.py    # Run the full pipeline
 ### Prerequisites
 
 - **System**: Linux or HPC cluster with Slurm
-- **Python**: 3.8 or higher
+- **Python**: 3.9 or higher (required for pandas 2.x and whisperx)
 - **GPU**: CUDA-capable GPU (recommended)
 - **Access**: TAMU network or VPN (for file downloads)
 - **GitHub**: Account with repository access
@@ -341,6 +341,20 @@ FileNotFoundError: config.yaml not found
 ERROR: Cannot install pandas and whisperx because of conflicting dependencies
 ```
 **Solution**: Already fixed in `requirements.txt` with `pandas>=2.2.3,<2.3.0`
+
+### Pandas dependency conflict
+```
+ERROR: No matching distribution found for pandas<2.3.0,>=2.2.3
+```
+**Solution**: 
+```bash
+# Your Python version is too old. Load Python 3.9+
+ml GCCcore/10.3.0 Python/3.9
+
+# Remove old venv and recreate
+rm -rf venv
+bash setup_environment.sh
+```
 
 ### GitHub authentication failed
 ```
