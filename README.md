@@ -287,7 +287,7 @@ credentials:
 whisperx:
   model_name: "large-v3"  # Options: tiny, base, small, medium, large-v2, large-v3, turbo
   batch_size: 16          # Adjust based on GPU memory
-  compute_type: "float16" # float16 (GPU) or float32 (CPU)
+  compute_type: "int8" # int8 (GPU - best compatibility), float16 (GPU - faster but requires modern GPU), or float32 (CPU)
   language: null          # e.g., "en", "es", or null for auto-detect
   
   vtt:

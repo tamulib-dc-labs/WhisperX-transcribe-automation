@@ -154,6 +154,10 @@ cat > activate_env.sh << 'EOF'
 #!/bin/bash
 # Helper script to activate environment with all required variables
 
+# Load Python 3.9 module (required for venv to work)
+echo "Loading Python 3.9 module..."
+ml GCCcore/10.3.0 Python/3.9
+
 # Load configuration
 if [ ! -f "config.yaml" ]; then
     echo "Error: config.yaml not found!"
@@ -174,6 +178,7 @@ export NLTK_DATA="$NLTK_DATA"
 export TORCH_HOME="$TORCH_HOME"
 
 echo "Environment activated!"
+echo "  Python: $(python --version)"
 echo "  Virtual env: $VENV_PATH"
 echo "  HF_HOME: $HF_HOME"
 echo "  NLTK_DATA: $NLTK_DATA"

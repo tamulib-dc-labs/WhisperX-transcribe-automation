@@ -67,8 +67,11 @@ whisperx:
   # Batch size for transcription (adjust based on GPU memory)
   batch_size: 16
   
-  # Compute type: float16 (GPU), float32 (CPU), int8
-  compute_type: "float16"
+  # Compute type options:
+  # - int8: Best compatibility, works on all GPUs, good performance, lower memory
+  # - float16: Faster but requires GPU with efficient float16 support (modern NVIDIA GPUs)
+  # - float32: CPU fallback, slower on GPU
+  compute_type: "int8"
   
   # Language code (e.g., 'en', 'es', 'fr') or null for auto-detect
   language: null
