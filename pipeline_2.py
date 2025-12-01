@@ -70,16 +70,17 @@ GIT_REPO_NAME = "edge-grant-json-and-vtts"
 GIT_USERNAME = "JvkChaitanya"
 GIT_TOKEN = ""  # Set your token here or use environment variable GIT_TOKEN
 
-# --- Cache and Model Directories ---
+# --- Cache Directories ---
 # You can customize these paths or leave them as default
 # These directories store downloaded models and cache data to avoid re-downloading
 CACHE_DIR = "/scratch/user/jvk_chaitanya/cache"  # Main cache directory
 # All cache subdirectories are automatically created under CACHE_DIR:
-HF_CACHE = f"{CACHE_DIR}/huggingface"  # HuggingFace models cache
+HF_CACHE = f"{CACHE_DIR}/huggingface"  # HuggingFace models cache (WhisperX models stored here)
 PYTHON_CACHE = f"{CACHE_DIR}/python_packages"  # Python packages cache
 NLTK_CACHE = f"{CACHE_DIR}/nltk_data"  # NLTK data cache
-MODEL_CACHE = f"{CACHE_DIR}/models"  # WhisperX models cache
-MODEL_DIR = None  # Set to specific model directory if using offline/local models
+# Note: MODEL_DIR is optional and only needed if you want to use a specific local model path
+# By default, WhisperX will use models from HF_CACHE automatically
+MODEL_DIR = None  # Optional: Set to specific model path for transcribe.py --model-dir argument
 
 # --- Transcription Settings ---
 WHISPER_MODEL = "large-v3"
@@ -226,7 +227,7 @@ def main():
     # --- Create cache directory structure ---
     os.makedirs(CACHE_DIR, exist_ok=True)
     
-    # --- Set environment variables for all cache paths and model_dir ---
+    # --- Set environment variables for all cache paths ---
     if HF_CACHE: 
         os.environ['HF_HOME'] = HF_CACHE
         os.makedirs(HF_CACHE, exist_ok=True)
@@ -235,9 +236,6 @@ def main():
     if NLTK_CACHE: 
         os.environ['NLTK_DATA'] = NLTK_CACHE
         os.makedirs(NLTK_CACHE, exist_ok=True)
-    if MODEL_CACHE: 
-        os.environ['MODEL_CACHE'] = MODEL_CACHE
-        os.makedirs(MODEL_CACHE, exist_ok=True)
     if MODEL_DIR: 
         os.environ['MODEL_DIR'] = MODEL_DIR
         os.makedirs(MODEL_DIR, exist_ok=True)
@@ -396,7 +394,7 @@ def main():
     with open(slurm_job_path, "r") as f:
         slurm_content = f.read()
 
-    # Replace cache paths and model_dir using config values
+    # Replace cache paths using config values
     # Note: Update these old paths if your SLURM file contains them
     if HF_CACHE:
         slurm_content = slurm_content.replace("/scratch/user/jvk_chaitanya/hf_cache", HF_CACHE)
@@ -404,11 +402,6 @@ def main():
         slurm_content = slurm_content.replace("/scratch/user/jvk_chaitanya/python_packages", PYTHON_CACHE)
     if NLTK_CACHE:
         slurm_content = slurm_content.replace("/scratch/user/jvk_chaitanya/nltk_data", NLTK_CACHE)
-    if MODEL_CACHE:
-        slurm_content = slurm_content.replace("/scratch/user/jvk_chaitanya/hf_cache/hub/models--Systran--faster-whisper-large-v3/snapshots/edaa852ec7e145841d8ffdb056a99866b5f0a478", MODEL_CACHE)
-    if MODEL_DIR:
-        # Replace any model-dir argument or path in slurm job file
-        slurm_content = re.sub(r'(--model-dir\s+)("[^"]*"|\S+)', f'\\1"{MODEL_DIR}"', slurm_content)
 
     # Overwrite the main slurm job file with updated content
     with open(slurm_job_path, "w") as f:
