@@ -377,17 +377,19 @@ def main():
         print("This ensures SLURM job can run offline without internet access.")
         print("Note: WhisperX package should already be installed in venv via requirements.txt")
         print("Note: If models are already cached, this step will skip downloading.")
+        print("Note: Downloading with int8 (CPU compatible), will work with float16 on GPU.")
         
         # Set environment to suppress warnings
         model_env = os.environ.copy()
         model_env['PYTHONWARNINGS'] = 'ignore'
         
+        # Use int8 for downloading on CPU nodes, the model files work for any compute type
         model_download_cmd = [
             python_cmd,
             MODEL_DOWNLOAD_SCRIPT_PATH,
             "--model", WHISPER_MODEL,
             "--cache-dir", HF_CACHE,
-            "--compute-type", COMPUTE_TYPE,
+            "--compute-type", "int8",  # Use int8 for CPU download, works on GPU too
             "--languages"
         ] + ALIGNMENT_LANGUAGES
         
