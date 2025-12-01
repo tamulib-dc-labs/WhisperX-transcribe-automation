@@ -220,67 +220,78 @@ python git_upload.py \
 
 ## Pipeline Workflow
 
+The pipeline executes these steps in order:
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│ 1. Load Environment Modules                                     │
-│    - Execute: ml GCCcore/10.3.0 Python FFmpeg CUDA             │
-│    - Prepares base Python and required libraries               │
+│ Step 1: Load Environment Modules                                │
+│    Command: ml GCCcore/10.3.0 Python FFmpeg CUDA               │
+│    Purpose: Loads base Python interpreter and system libraries │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ 2. Export PYTHONPATH                                            │
-│    - Set PYTHONPATH for Python package locations                │
-│    - Required before venv creation                              │
+│ Step 2: Export PYTHONPATH                                       │
+│    Purpose: Sets Python package search paths                    │
+│    Required: Must run BEFORE venv creation                      │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ 3. Check/Create Virtual Environment                             │
-│    - Check if venv exists                                       │
-│    - Create if not present: python -m venv venv                 │
-│    - Use venv Python for all subsequent commands                │
+│ Step 3: Check/Create Virtual Environment                        │
+│    - Checks if venv/ exists in working directory                │
+│    - Creates if missing: python -m venv venv                    │
+│    - Installs requirements.txt (includes WhisperX PACKAGE)      │
+│    - All subsequent Python commands use venv/bin/python         │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ 4. Prepare Directories                                          │
-│    - Clear data/oral_input/ directory                           │
-│    - Clear data/oral_output/ directory                          │
+│ Step 4: Prepare Data Directories                                │
+│    - Clears data/oral_input/ directory                          │
+│    - Clears data/oral_output/ directory                         │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ 5. Download Audio Files                                         │
-│    - Read Google Sheet for incomplete tasks                     │
-│    - Download folders from SMB network share                    │
-│    - Save to data/oral_input/ directory                         │
+│ Step 5: Download Audio Files (download_automation_3.py)         │
+│    - Reads Google Sheet for incomplete tasks                    │
+│    - Downloads audio from SMB network share                     │
+│    - Saves to data/oral_input/                                  │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ 6. Download WhisperX Model Files (if enabled)                   │
-│    - Download model files to cache (not WhisperX package)       │
-│    - Download alignment models for specified languages          │
-│    - Ensures SLURM job can run offline                          │
-│    - Note: WhisperX package installed via requirements.txt      │
+│ Step 6: Download WhisperX Model FILES (d_whisperx.py)           │
+│    - Downloads AI model FILES (large-v3, alignment models)      │
+│    - Saves to cache/models/ directory                           │
+│    - Enables offline SLURM execution (no internet needed)       │
+│    - Note: This downloads MODEL FILES, NOT the WhisperX        │
+│      package (package already installed via requirements.txt)   │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ 7. Submit SLURM Job                                             │
-│    - Update cache paths in SLURM script                         │
-│    - Submit job for GPU transcription                           │
-│    - Receive job ID                                             │
+│ Step 7: Submit SLURM Job                                        │
+│    - Updates cache paths in run_1.slurm                         │
+│    - Submits batch job: sbatch run_1.slurm                      │
+│    - Captures job ID for monitoring                             │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ 8. Monitor Job Status                                           │
-│    - Check job status every N minutes                           │
-│    - Wait until job completion                                  │
+│ Step 8: Monitor SLURM Job Status                                │
+│    - Checks status every N minutes (configurable)               │
+│    - Waits until job completes                                  │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ 9. Upload to GitHub                                             │
-│    - Clone/update Git repository (OUTSIDE working dir)          │
-│    - Create timestamped branch                                  │
-│    - Sync transcription files (JSON + VTT)                      │
-│    - Push to GitHub and create pull request                    │
+│ Step 9: Upload Results to GitHub (git_upload.py)                │
+│    - Syncs to OUTPUT repo (edge-grant-json-and-vtts)           │
+│    - Creates timestamped branch                                 │
+│    - Uploads JSON + VTT files from data/oral_output/            │
+│    - Pushes to GitHub                                           │
 └─────────────────────────────────────────────────────────────────┘
+
+**Important Notes:**
+- WORKING_DIR is your local clone of WhisperX-transcribe-automation repo
+- GIT_REPO_PATH is a separate repo for transcription OUTPUT files
+- Steps 1-2 MUST run before Step 3 (venv creation)
+- WhisperX PACKAGE (Python library) → installed in Step 3 via requirements.txt
+- WhisperX MODEL FILES (AI models) → downloaded in Step 6 via d_whisperx.py
 ```
 
 ## Individual Scripts

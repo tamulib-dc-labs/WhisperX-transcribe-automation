@@ -21,8 +21,9 @@ from datetime import datetime
 CHECK_INTERVAL_MINS = 5  # How often to check SLURM job status (in minutes)
 
 # --- Working Directory ---
-# Main working directory - all processing happens here
-WORKING_DIR = "/scratch/user/jvk_chaitanya/libraries/speech_text"
+# Main working directory - automatically set to this script's directory (the repo root)
+# This is your local clone of WhisperX-transcribe-automation repo
+WORKING_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # --- Virtual Environment ---
 # Virtual environment will be created inside WORKING_DIR
@@ -34,11 +35,12 @@ VENV_PATH = f"{WORKING_DIR}/{VENV_NAME}"  # Full path to virtual environment
 MODULE_LOAD_COMMAND = "ml GCCcore/10.3.0 Python FFmpeg CUDA"  # Customize as needed
 
 # --- File Paths (Scripts) ---
-DOWNLOAD_SCRIPT_PATH = "/scratch/user/jvk_chaitanya/libraries/speech_text/download_automation_3.py"
-MODEL_DOWNLOAD_SCRIPT_PATH = "/scratch/user/jvk_chaitanya/libraries/speech_text/d_whisperx.py"
-TRANSCRIBE_SCRIPT_PATH = "/scratch/user/jvk_chaitanya/libraries/speech_text/transcribe.py"
-GIT_UPLOAD_SCRIPT_PATH = "/scratch/user/jvk_chaitanya/libraries/speech_text/git_upload.py"
-SLURM_JOB_PATH = "/scratch/user/jvk_chaitanya/libraries/speech_text/run_1.slurm"
+# All scripts are in the WORKING_DIR (local git repo)
+DOWNLOAD_SCRIPT_PATH = f"{WORKING_DIR}/download_automation_3.py"
+MODEL_DOWNLOAD_SCRIPT_PATH = f"{WORKING_DIR}/d_whisperx.py"
+TRANSCRIBE_SCRIPT_PATH = f"{WORKING_DIR}/transcribe.py"
+GIT_UPLOAD_SCRIPT_PATH = f"{WORKING_DIR}/git_upload.py"
+SLURM_JOB_PATH = f"{WORKING_DIR}/run_1.slurm"
 
 # --- Data Directories (relative to WORKING_DIR) ---
 # Data folder structure: WORKING_DIR/data/oral_input and WORKING_DIR/data/oral_output
@@ -46,8 +48,9 @@ DATA_FOLDER = "data"  # Folder name for data (will be created under WORKING_DIR)
 ORAL_INPUT_FOLDER = "oral_input"   # Input folder name (under data/)
 ORAL_OUTPUT_FOLDER = "oral_output" # Output folder name (under data/)
 
-# --- Git Repository (OUTSIDE working directory) ---
-# Git repository will be stored OUTSIDE the working directory
+# --- Git Repository for Output (OUTSIDE working directory) ---
+# This is where transcription OUTPUT will be pushed (edge-grant-json-and-vtts repo)
+# This is DIFFERENT from WORKING_DIR (which is the WhisperX-transcribe-automation repo)
 GIT_REPO_PATH = "/scratch/user/jvk_chaitanya/git_repositories/edge-grant-json-and-vtts"
 
 # --- SMB Network Share Settings ---
