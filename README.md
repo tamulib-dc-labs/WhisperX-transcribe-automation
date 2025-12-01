@@ -222,47 +222,60 @@ python git_upload.py \
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│ 1. Initialize Environment                                       │
-│    - Load modules (GCCcore, FFmpeg, CUDA, Python)              │
-│    - Activate virtual environment                               │
-│    - Set cache paths and environment variables                  │
+│ 1. Load Environment Modules                                     │
+│    - Execute: ml GCCcore/10.3.0 Python FFmpeg CUDA             │
+│    - Prepares base Python and required libraries               │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ 2. Prepare Directories                                          │
-│    - Clear oral_input/ directory                                │
-│    - Clear oral_output/ directory                               │
+│ 2. Export PYTHONPATH                                            │
+│    - Set PYTHONPATH for Python package locations                │
+│    - Required before venv creation                              │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ 3. Download Audio Files                                         │
+│ 3. Check/Create Virtual Environment                             │
+│    - Check if venv exists                                       │
+│    - Create if not present: python -m venv venv                 │
+│    - Use venv Python for all subsequent commands                │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│ 4. Prepare Directories                                          │
+│    - Clear data/oral_input/ directory                           │
+│    - Clear data/oral_output/ directory                          │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│ 5. Download Audio Files                                         │
 │    - Read Google Sheet for incomplete tasks                     │
 │    - Download folders from SMB network share                    │
-│    - Save to oral_input/ directory                              │
+│    - Save to data/oral_input/ directory                         │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ 3.5. Download WhisperX Models (if enabled)                      │
-│    - Download WhisperX model to cache                           │
+│ 6. Download WhisperX Model Files (if enabled)                   │
+│    - Download model files to cache (not WhisperX package)       │
 │    - Download alignment models for specified languages          │
 │    - Ensures SLURM job can run offline                          │
+│    - Note: WhisperX package installed via requirements.txt      │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ 4. Submit SLURM Job                                             │
+│ 7. Submit SLURM Job                                             │
 │    - Update cache paths in SLURM script                         │
 │    - Submit job for GPU transcription                           │
 │    - Receive job ID                                             │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ 5. Monitor Job Status                                           │
+│ 8. Monitor Job Status                                           │
 │    - Check job status every N minutes                           │
 │    - Wait until job completion                                  │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ 6. Upload to GitHub                                             │
+│ 9. Upload to GitHub                                             │
 │    - Clone/update Git repository (OUTSIDE working dir)          │
 │    - Create timestamped branch                                  │
 │    - Sync transcription files (JSON + VTT)                      │
@@ -342,18 +355,20 @@ Uploads transcription results to GitHub repository.
 - `--branch-prefix`: Branch name prefix (optional)
 
 ### `d_whisperx.py`
-Downloads WhisperX models and alignment models for offline use.
+Downloads WhisperX **model files** (not the package) for offline use.
+
+**Important:** WhisperX Python package is installed via `requirements.txt` in your venv. This script only downloads the **model files** to cache so SLURM jobs can run offline.
 
 **Features:**
-- Download any WhisperX model (tiny to turbo)
-- Download alignment models for multiple languages
+- Download any WhisperX model files (tiny to turbo)
+- Download alignment model files for multiple languages
 - Configurable cache directory
 - Automatic directory creation
 - Integrated into pipeline (runs before SLURM job)
 
 **Command Line Arguments:**
 - `--model`: WhisperX model size (default: large-v3)
-- `--cache-dir`: Directory to cache models
+- `--cache-dir`: Directory to cache model files
 - `--languages`: Language codes for alignment models
 - `--compute-type`: Computation precision
 
@@ -368,6 +383,12 @@ python d_whisperx.py \
 
 **Pipeline Integration:**
 The pipeline automatically runs this before SLURM job submission if `DOWNLOAD_MODELS_BEFORE_SLURM = True`.
+
+**Note:** Ensure WhisperX package is already installed in your venv via:
+```bash
+source venv/bin/activate
+pip install -r requirements.txt
+```
 
 ### `run_1.slurm`
 SLURM batch script for GPU transcription jobs.

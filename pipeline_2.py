@@ -284,7 +284,9 @@ def main():
         print("Error: GitHub token cannot be empty.")
         sys.exit(1)
 
-    # Step 1: Load Environment Modules (for HPC)
+    # Step 1: Load Environment Modules (for HPC) - BEFORE creating venv
+    log_step(1, "Load environment modules", "STARTED")
+    print(f"Loading modules: {MODULE_LOAD_COMMAND}")
     if not run_command(
         MODULE_LOAD_COMMAND,
         1,
@@ -293,37 +295,50 @@ def main():
     ):
         sys.exit(1)
 
-    # Step 2: Check/Create Virtual Environment
+    # Step 2: Export PYTHONPATH - BEFORE creating venv
+    log_step(2, "Export PYTHONPATH environment variable", "STARTED")
+    # PYTHONPATH is already set above, just confirm it
+    export_cmd = f"export PYTHONPATH={os.environ['PYTHONPATH']}"
+    print(f"Exporting: {export_cmd}")
+    if not run_command(
+        export_cmd,
+        2,
+        "Export PYTHONPATH for module access",
+        shell=True
+    ):
+        print("Warning: Could not export PYTHONPATH (may already be set)")
+    
+    # Step 3: Check/Create Virtual Environment
     venv_python = os.path.join(VENV_PATH, "bin", "python")
     if not os.path.exists(venv_python):
-        log_step(2, "Create Python virtual environment", "STARTED")
+        log_step(3, "Create Python virtual environment", "STARTED")
         print(f"Virtual environment not found at {VENV_PATH}")
         print("Creating new virtual environment...")
         if not run_command(
             f"python -m venv {VENV_PATH}",
-            2,
+            3,
             f"Create virtual environment at {VENV_PATH}",
             shell=True
         ):
             sys.exit(1)
     else:
-        log_step(2, "Virtual environment already exists", "STARTED")
+        log_step(3, "Virtual environment already exists", "STARTED")
         print(f"Using existing virtual environment at {VENV_PATH}")
-        log_step(2, "Virtual environment already exists", "COMPLETED")
+        log_step(3, "Virtual environment already exists", "COMPLETED")
 
-    # Step 3: Use virtual environment Python for all subsequent commands
+    # Step 4: Use virtual environment Python for all subsequent commands
     python_cmd = venv_python
     print(f"Using Python: {python_cmd}")
 
-    # Step 4: Clear files in data/oral_input/
-    if not clear_directory(oral_input_path, 4, f"Clear files in {oral_input_path}"):
+    # Step 5: Clear files in data/oral_input/
+    if not clear_directory(oral_input_path, 5, f"Clear files in {oral_input_path}"):
         sys.exit(1)
 
-    # Step 5: Clear files in data/oral_output/
-    if not clear_directory(oral_output_path, 5, f"Clear files in {oral_output_path}"):
+    # Step 6: Clear files in data/oral_output/
+    if not clear_directory(oral_output_path, 6, f"Clear files in {oral_output_path}"):
         sys.exit(1)
 
-    # Step 6: Run Network Download Script (Replaces Dropbox)
+    # Step 7: Run Network Download Script
     download_cmd = [
         python_cmd,
         DOWNLOAD_SCRIPT_PATH,
@@ -342,15 +357,18 @@ def main():
 
     if not run_command(
         download_cmd,
-        6,
+        7,
         "Run Network Download Script"
     ):
         sys.exit(1)
 
-    # Step 6.5: Download WhisperX models (if enabled and not already downloaded)
+    # Step 8: Download WhisperX models (if enabled and not already cached)
+    # Note: WhisperX is installed via requirements.txt in venv
+    # This step only downloads the model files for offline use
     if DOWNLOAD_MODELS_BEFORE_SLURM:
-        log_step("6.5", "Checking/Downloading WhisperX models", "STARTED")
+        log_step(8, "Checking/Downloading WhisperX model files", "STARTED")
         print("This ensures SLURM job can run offline without internet access.")
+        print("Note: WhisperX package should already be installed in venv via requirements.txt")
         
         model_download_cmd = [
             python_cmd,
@@ -363,13 +381,13 @@ def main():
         
         if not run_command(
             model_download_cmd,
-            "6.5",
-            "Download WhisperX models for offline use"
+            8,
+            "Download WhisperX model files for offline use"
         ):
             print("Warning: Model download failed. SLURM job may fail if it needs to download models.")
             # Don't exit - let user decide if they want to continue
 
-    # Step 7: Update cache paths in slurm job file before submission
+    # Step 9: Update cache paths in slurm job file before submission
     slurm_job_path = os.path.abspath(SLURM_JOB_PATH)
     # Read slurm job file
     with open(slurm_job_path, "r") as f:
@@ -395,7 +413,7 @@ def main():
 
     job_id = submit_slurm_job(
         slurm_job_path,
-        7,
+        9,
         f"Submit batch job ({slurm_job_path})"
     )
 
@@ -403,10 +421,10 @@ def main():
         print("Failed to submit batch job. Exiting.")
         sys.exit(1)
 
-    # Step 8: Monitor the job
+    # Step 10: Monitor the job
     monitor_job_status(job_id, CHECK_INTERVAL_MINS)
 
-    # Step 9: Trigger Git Upload (Only runs after monitor finishes)
+    # Step 11: Trigger Git Upload (Only runs after monitor finishes)
     git_repo_path = os.path.abspath(GIT_REPO_PATH)
     git_upload_cmd = [
         python_cmd,
@@ -421,13 +439,13 @@ def main():
 
     if not run_command(
         git_upload_cmd,
-        9,
+        11,
         "Run Git_upload.py to upload files to github"
     ):
         sys.exit(1)
 
     # Final Completion
-    log_step(10, "All steps completed successfully", "COMPLETED")
+    log_step(12, "All steps completed successfully", "COMPLETED")
 
     print("\n" + "="*80)
     print("BATCH JOB PIPELINE - FINISHED")
