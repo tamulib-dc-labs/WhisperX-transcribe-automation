@@ -10,6 +10,14 @@ import argparse
 import whisperx
 import torch
 
+# Fix for PyTorch 2.6+ weights_only issue with pyannote models
+# Allow safe loading of omegaconf types used by pyannote
+try:
+    from omegaconf import ListConfig, DictConfig
+    torch.serialization.add_safe_globals([ListConfig, DictConfig])
+except ImportError:
+    pass  # If omegaconf not installed, will handle differently
+
 def download_models(model_name="large-v3", cache_dir=None, languages=None, compute_type="float16"):
     """
     Download WhisperX models and alignment models.

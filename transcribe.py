@@ -15,6 +15,14 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 
 warnings.filterwarnings('ignore')
 
+# Fix for PyTorch 2.6+ weights_only issue with pyannote models
+# Allow safe loading of omegaconf types used by pyannote
+try:
+    from omegaconf import ListConfig, DictConfig
+    torch.serialization.add_safe_globals([ListConfig, DictConfig])
+except ImportError:
+    pass  # If omegaconf not installed, will handle differently
+
 # Setup logging
 logging.basicConfig(
     level=logging.INFO,
