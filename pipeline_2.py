@@ -125,13 +125,19 @@ def run_command(cmd, step_num, description, shell=False, env=None):
         
         if result.stdout:
             print(result.stdout)
+        if result.stderr:
+            # Print stderr but don't treat as error if exit code is 0
+            print(result.stderr, file=sys.stderr)
         
         log_step(step_num, description, "COMPLETED")
         return True
         
     except subprocess.CalledProcessError as e:
         log_step(step_num, description, "FAILED")
-        print(f"Error output: {e.stderr}", file=sys.stderr)
+        if e.stdout:
+            print(f"Output: {e.stdout}")
+        if e.stderr:
+            print(f"Error output: {e.stderr}", file=sys.stderr)
         print(f"Return code: {e.returncode}", file=sys.stderr)
         return False
 
@@ -373,6 +379,7 @@ def main():
         
         model_download_cmd = [
             python_cmd,
+            "-W", "ignore",  # Suppress Python warnings
             MODEL_DOWNLOAD_SCRIPT_PATH,
             "--model", WHISPER_MODEL,
             "--cache-dir", HF_CACHE,
