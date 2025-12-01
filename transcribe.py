@@ -18,10 +18,27 @@ warnings.filterwarnings('ignore')
 # Fix for PyTorch 2.6+ weights_only issue with pyannote models
 # Allow safe loading of omegaconf types used by pyannote
 try:
-    from omegaconf import ListConfig, DictConfig
-    torch.serialization.add_safe_globals([ListConfig, DictConfig])
-except ImportError:
-    pass  # If omegaconf not installed, will handle differently
+    import omegaconf
+    torch.serialization.add_safe_globals([
+        omegaconf.ListConfig,
+        omegaconf.DictConfig,
+        omegaconf.base.ContainerMetadata,
+        omegaconf.base.Node,
+    ])
+except (ImportError, AttributeError):
+    pass  # If omegaconf not installed or attributes missing, will handle differently
+
+# Alternative fix: Patch torch.load to use weights_only=False for pyannote compatibility
+# This is a backup solution if add_safe_globals doesn't cover all types
+import functools
+_original_torch_load = torch.load
+@functools.wraps(_original_torch_load)
+def _patched_torch_load(*args, **kwargs):
+    # Use weights_only=False for compatibility with older model files
+    if 'weights_only' not in kwargs:
+        kwargs['weights_only'] = False
+    return _original_torch_load(*args, **kwargs)
+torch.load = _patched_torch_load
 
 # Setup logging
 logging.basicConfig(
@@ -296,11 +313,27 @@ def transcribe_directory(
 def _process_gpu_batch(args):
     """Process a batch of files on a specific GPU (module-level function for pickling)"""
     # Fix for PyTorch 2.6+ weights_only issue - must be done in each worker process
+    import torch
     try:
-        from omegaconf import ListConfig, DictConfig
-        torch.serialization.add_safe_globals([ListConfig, DictConfig])
-    except ImportError:
+        import omegaconf
+        torch.serialization.add_safe_globals([
+            omegaconf.ListConfig,
+            omegaconf.DictConfig,
+            omegaconf.base.ContainerMetadata,
+            omegaconf.base.Node,
+        ])
+    except (ImportError, AttributeError):
         pass
+    
+    # Patch torch.load in worker process
+    import functools
+    _original_torch_load = torch.load
+    @functools.wraps(_original_torch_load)
+    def _patched_torch_load(*args, **kwargs):
+        if 'weights_only' not in kwargs:
+            kwargs['weights_only'] = False
+        return _original_torch_load(*args, **kwargs)
+    torch.load = _patched_torch_load
     
     gpu_id, file_batch, output_path, model_name, model_dir, batch_size, compute_type, language, max_line_width, max_line_count, highlight_words = args
     
