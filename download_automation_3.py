@@ -4,7 +4,6 @@ import pandas as pd
 import argparse
 import re
 import sys
-import yaml
 from smbprotocol.exceptions import SMBResponseException
 
 # --- SMB Helper Functions ---
@@ -101,35 +100,35 @@ def get_incomplete_folders_from_sheet(sheet_url, max_folders=None):
 
 # --- Main Execution ---
 
-def load_config(config_path):
-    with open(config_path, 'r') as f:
-        return yaml.safe_load(f)
-
 def main():
-    # Load config file
-    config_path = os.path.join(os.path.dirname(__file__), "config", "config.yaml")
-    config = load_config(config_path)
+    parser = argparse.ArgumentParser(
+        description='Download folders from SMB Network Share based on Google Sheets data'
+    )
+    
+    parser.add_argument('--sheet-url', required=True, help='URL of the Google Sheet')
+    parser.add_argument('--local-path', required=True, help='Local directory to save files')
+    parser.add_argument('--max-folders', type=int, default=None, help='Max folders to process')
+    
+    # SMB Specific Arguments
+    parser.add_argument('--server', default="cifs.library.tamu.edu", help='SMB Server Address')
+    parser.add_argument('--share', required=True, help='Share name (e.g. projects, reserves)')
+    parser.add_argument('--base-path', default='', help='Subfolder path inside the share')
+    parser.add_argument('--username', required=True, help='NetID')
+    
+    # ADDED: Password argument
+    parser.add_argument('--password', required=True, help='NetID Password')
 
-    # Get all settings from config
-    sheet_url = config["google_sheets"]["url"]
-    local_path = os.path.abspath(config["paths"]["oral_input"])
-    max_folders = config["google_sheets"].get("max_folders", None)
-
-    smb_server = config["smb"]["server"]
-    smb_share = config["smb"]["share"]
-    smb_base_path = config["smb"].get("base_path", "")
-    smb_username = config["smb"]["username"]
-    smb_password = config["smb"]["password"]
+    args = parser.parse_args()
 
     try:
-        # 1. Authenticate with SMB Server using config
-        print(f"Connecting to {smb_server}...")
-        smbclient.register_session(smb_server, username=smb_username, password=smb_password)
+        # 1. Authenticate with SMB Server using the argument
+        print(f"Connecting to {args.server}...")
+        smbclient.register_session(args.server, username=args.username, password=args.password)
         print("Successfully connected to Network Share")
 
         # 2. Get list from Google Sheet
-        incomplete_folders = get_incomplete_folders_from_sheet(sheet_url, max_folders)
-
+        incomplete_folders = get_incomplete_folders_from_sheet(args.sheet_url, args.max_folders)
+        
         if not incomplete_folders:
             print("No incomplete folders found.")
             return
@@ -143,17 +142,17 @@ def main():
 
         for idx, folder_name in enumerate(incomplete_folders, 1):
             # Construct the full UNC path
-            network_root = fr"\\{smb_server}\{smb_share}"
-
-            if smb_base_path:
-                full_remote_path = os.path.join(network_root, smb_base_path, folder_name)
+            network_root = fr"\\{args.server}\{args.share}"
+            
+            if args.base_path:
+                full_remote_path = os.path.join(network_root, args.base_path, folder_name)
             else:
                 full_remote_path = os.path.join(network_root, folder_name)
 
-            local_destination = os.path.join(local_path, folder_name)
+            local_destination = os.path.join(args.local_path, folder_name)
 
             print(f"\n[{idx}/{len(incomplete_folders)}] Downloading: {full_remote_path}")
-
+            
             success = download_folder_smb(full_remote_path, local_destination)
 
             if success:
@@ -170,7 +169,7 @@ def main():
         print(f"Total processed: {len(incomplete_folders)}")
         print(f"Success: {successful_downloads}")
         print(f"Failed/Not Found: {failed_downloads}")
-
+        
         if skipped_folders:
             print("\nFolders not found on Network:")
             for f in skipped_folders:

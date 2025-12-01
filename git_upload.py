@@ -1,12 +1,30 @@
+import subprocess
+import os
+import datetime
+import sys
+import argparse
+
 def git_standard_pipeline(
     source_data_folder,   # Where your files are NOW
-    git_repo_folder,      # Where we will download the repo to
+    git_repo_folder,      # Where we will download the repo to (OUTSIDE working directory)
     target_owner,
     repo_name,
     auth_username,
     token,
     branch_prefix="upload"
 ):
+    """
+    Standard Git pipeline for uploading files to GitHub
+    
+    Args:
+        source_data_folder: Path to the folder containing files to upload
+        git_repo_folder: Path where git repo will be cloned/maintained (should be OUTSIDE working directory)
+        target_owner: GitHub repository owner
+        repo_name: GitHub repository name
+        auth_username: GitHub username for authentication
+        token: GitHub personal access token
+        branch_prefix: Prefix for the branch name (default: "upload")
+    """
     # Construct URL with Token
     # This puts the token directly into the URL for authentication
     remote_url = f"https://{auth_username}:{token}@github.com/{target_owner}/{repo_name}.git"
@@ -24,6 +42,8 @@ def git_standard_pipeline(
         # --- STEP 1: Setup the Git Repository ---
         if not os.path.exists(git_repo_folder):
             print("Cloning repository (First time setup)...")
+            # Create parent directory if it doesn't exist
+            os.makedirs(os.path.dirname(git_repo_folder), exist_ok=True)
             # We clone directly into the target folder
             subprocess.run(["git", "clone", remote_url, git_repo_folder], check=True)
             
@@ -89,40 +109,39 @@ def git_standard_pipeline(
         print(f"ERROR: {e}")
 
 # ==========================================
-# CONFIGURATION
+# MAIN - Parse command line arguments
 # ==========================================
-import subprocess
-import os
-import datetime
-import sys
-import yaml
-
-def load_config(config_path):
-    with open(config_path, 'r') as f:
-        return yaml.safe_load(f)
-
 if __name__ == "__main__":
-    # Load config file
-    config_path = os.path.join(os.path.dirname(__file__), "config", "config.yaml")
-    config = load_config(config_path)
-
-    # 1. WHERE YOUR DATA IS (The Source)
-    SOURCE_PATH = os.path.abspath(config["paths"]["oral_output"])
-
-    # 2. WHERE THE GIT REPO SHOULD BE (The Destination)
-    REPO_PATH = os.path.abspath(config["paths"]["git_repo"])
-
-    # 3. GITHUB DETAILS
-    TOKEN = config["git"]["token"]
-    USER = config["git"]["username"]
-    OWNER = config["git"]["owner"]
-    REPO = config["git"]["repo"]
+    parser = argparse.ArgumentParser(
+        description="Upload files to GitHub repository via standard Git pipeline"
+    )
+    
+    # Required arguments
+    parser.add_argument("--source-path", required=True, 
+                       help="Path to the folder containing files to upload")
+    parser.add_argument("--repo-path", required=True,
+                       help="Path where git repo will be cloned/maintained (should be OUTSIDE working directory)")
+    parser.add_argument("--owner", required=True,
+                       help="GitHub repository owner")
+    parser.add_argument("--repo-name", required=True,
+                       help="GitHub repository name")
+    parser.add_argument("--username", required=True,
+                       help="GitHub username for authentication")
+    parser.add_argument("--token", required=True,
+                       help="GitHub personal access token")
+    
+    # Optional arguments
+    parser.add_argument("--branch-prefix", default="upload",
+                       help="Prefix for the branch name (default: upload)")
+    
+    args = parser.parse_args()
 
     git_standard_pipeline(
-        source_data_folder=SOURCE_PATH,
-        git_repo_folder=REPO_PATH,
-        target_owner=OWNER,
-        repo_name=REPO,
-        auth_username=USER,
-        token=TOKEN
+        source_data_folder=args.source_path,
+        git_repo_folder=args.repo_path,
+        target_owner=args.owner,
+        repo_name=args.repo_name,
+        auth_username=args.username,
+        token=args.token,
+        branch_prefix=args.branch_prefix
     )

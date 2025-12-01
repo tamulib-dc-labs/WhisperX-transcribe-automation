@@ -1,8 +1,9 @@
+langchain_huggingface
+langchain-core
 langchain
 transformers
 accelerate
 whisperx
 torch
+dropbox
 pandas
-pyyaml
-smbprotocol
