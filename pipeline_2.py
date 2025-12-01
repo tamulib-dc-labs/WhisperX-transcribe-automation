@@ -395,13 +395,40 @@ def main():
         slurm_content = f.read()
 
     # Replace cache paths using config values
-    # Note: Update these old paths if your SLURM file contains them
     if HF_CACHE:
         slurm_content = slurm_content.replace("/scratch/user/jvk_chaitanya/hf_cache", HF_CACHE)
     if PYTHON_CACHE:
         slurm_content = slurm_content.replace("/scratch/user/jvk_chaitanya/python_packages", PYTHON_CACHE)
     if NLTK_CACHE:
         slurm_content = slurm_content.replace("/scratch/user/jvk_chaitanya/nltk_data", NLTK_CACHE)
+    
+    # Replace script paths with WORKING_DIR-based paths
+    slurm_content = slurm_content.replace(
+        "/scratch/user/jvk_chaitanya/libraries/speech_text/transcribe.py",
+        TRANSCRIBE_SCRIPT_PATH
+    )
+    slurm_content = slurm_content.replace(
+        "/scratch/user/jvk_chaitanya/libraries/speech_text/oral_input/",
+        oral_input_path + "/"
+    )
+    slurm_content = slurm_content.replace(
+        "/scratch/user/jvk_chaitanya/libraries/speech_text/oral_output/",
+        oral_output_path + "/"
+    )
+    
+    # Replace venv path
+    slurm_content = slurm_content.replace(
+        "$SCRATCH/libraries/dlvenv/bin/activate",
+        f"{VENV_PATH}/bin/activate"
+    )
+    
+    # Remove or update hardcoded model-dir argument (WhisperX will use HF_CACHE automatically)
+    # Remove the entire --model-dir line since we're using HF_CACHE
+    slurm_content = re.sub(
+        r'\s+--model-dir\s+"[^"]*"',
+        '',
+        slurm_content
+    )
 
     # Overwrite the main slurm job file with updated content
     with open(slurm_job_path, "w") as f:

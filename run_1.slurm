@@ -37,7 +37,6 @@ export TRANSFORMERS_OFFLINE=1
 python /scratch/user/jvk_chaitanya/libraries/speech_text/transcribe.py \
     --model "large-v3" \
     --model-dir "/scratch/user/jvk_chaitanya/hf_cache/hub/models--Systran--faster-whisper-large-v3/snapshots/edaa852ec7e145841d8ffdb056a99866b5f0a478" \
-    --language "en" \
     --parallel \
     "/scratch/user/jvk_chaitanya/libraries/speech_text/oral_input/" \
     "/scratch/user/jvk_chaitanya/libraries/speech_text/oral_output/"
