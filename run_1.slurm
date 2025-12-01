@@ -12,18 +12,18 @@
 #module restore dl
 ml GCCcore/10.3.0 FFmpeg CUDA Python
 
-# Python venv
-source $SCRATCH/libraries/dlvenv/bin/activate
+# Python venv - PATH WILL BE INJECTED BY PIPELINE
+source {{VENV_ACTIVATE_PATH}}
 
-#specify package paths
-export PYTHONPATH=/scratch/user/jvk_chaitanya/python_packages:$PYTHONPATH
+#specify package paths - PATHS WILL BE INJECTED BY PIPELINE
+export PYTHONPATH={{PYTHON_CACHE}}:$PYTHONPATH
 
-# Set HuggingFace cache directory to your scratch space
-export HF_HOME=/scratch/user/jvk_chaitanya/hf_cache
+# Set HuggingFace cache directory
+export HF_HOME={{HF_CACHE}}
 
-export LD_LIBRARY_PATH=/scratch/user/jvk_chaitanya/python_packages/nvidia/cudnn/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH={{PYTHON_CACHE}}/nvidia/cudnn/lib:$LD_LIBRARY_PATH
 
-export NLTK_DATA=/scratch/user/jvk_chaitanya/nltk_data
+export NLTK_DATA={{NLTK_CACHE}}
 
 mkdir -p $NLTK_DATA
 
@@ -34,9 +34,9 @@ mkdir -p $NLTK_DATA
 export HF_HUB_OFFLINE=1
 export TRANSFORMERS_OFFLINE=1
 
-python /scratch/user/jvk_chaitanya/libraries/speech_text/transcribe.py \
-    --model "large-v3" \
-    --model-dir "/scratch/user/jvk_chaitanya/hf_cache/hub/models--Systran--faster-whisper-large-v3/snapshots/edaa852ec7e145841d8ffdb056a99866b5f0a478" \
+# PATHS WILL BE INJECTED BY PIPELINE
+python {{TRANSCRIBE_SCRIPT}} \
+    --model "{{WHISPER_MODEL}}" \
     --parallel \
-    "/scratch/user/jvk_chaitanya/libraries/speech_text/oral_input/" \
-    "/scratch/user/jvk_chaitanya/libraries/speech_text/oral_output/"
+    "{{ORAL_INPUT_PATH}}/" \
+    "{{ORAL_OUTPUT_PATH}}/"

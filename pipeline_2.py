@@ -376,10 +376,14 @@ def main():
         log_step(8, "Checking/Downloading WhisperX model files", "STARTED")
         print("This ensures SLURM job can run offline without internet access.")
         print("Note: WhisperX package should already be installed in venv via requirements.txt")
+        print("Note: If models are already cached, this step will skip downloading.")
+        
+        # Set environment to suppress warnings
+        model_env = os.environ.copy()
+        model_env['PYTHONWARNINGS'] = 'ignore'
         
         model_download_cmd = [
             python_cmd,
-            "-W", "ignore",  # Suppress Python warnings
             MODEL_DOWNLOAD_SCRIPT_PATH,
             "--model", WHISPER_MODEL,
             "--cache-dir", HF_CACHE,
@@ -390,54 +394,29 @@ def main():
         if not run_command(
             model_download_cmd,
             8,
-            "Download WhisperX model files for offline use"
+            "Download WhisperX model files for offline use",
+            env=model_env
         ):
             print("Warning: Model download failed. SLURM job may fail if it needs to download models.")
             # Don't exit - let user decide if they want to continue
 
-    # Step 9: Update cache paths in slurm job file before submission
+    # Step 9: Update SLURM job file with actual paths before submission
     slurm_job_path = os.path.abspath(SLURM_JOB_PATH)
-    # Read slurm job file
+    # Read slurm job template
     with open(slurm_job_path, "r") as f:
         slurm_content = f.read()
 
-    # Replace cache paths using config values
-    if HF_CACHE:
-        slurm_content = slurm_content.replace("/scratch/user/jvk_chaitanya/hf_cache", HF_CACHE)
-    if PYTHON_CACHE:
-        slurm_content = slurm_content.replace("/scratch/user/jvk_chaitanya/python_packages", PYTHON_CACHE)
-    if NLTK_CACHE:
-        slurm_content = slurm_content.replace("/scratch/user/jvk_chaitanya/nltk_data", NLTK_CACHE)
-    
-    # Replace script paths with WORKING_DIR-based paths
-    slurm_content = slurm_content.replace(
-        "/scratch/user/jvk_chaitanya/libraries/speech_text/transcribe.py",
-        TRANSCRIBE_SCRIPT_PATH
-    )
-    slurm_content = slurm_content.replace(
-        "/scratch/user/jvk_chaitanya/libraries/speech_text/oral_input/",
-        oral_input_path + "/"
-    )
-    slurm_content = slurm_content.replace(
-        "/scratch/user/jvk_chaitanya/libraries/speech_text/oral_output/",
-        oral_output_path + "/"
-    )
-    
-    # Replace venv path
-    slurm_content = slurm_content.replace(
-        "$SCRATCH/libraries/dlvenv/bin/activate",
-        f"{VENV_PATH}/bin/activate"
-    )
-    
-    # Remove or update hardcoded model-dir argument (WhisperX will use HF_CACHE automatically)
-    # Remove the entire --model-dir line since we're using HF_CACHE
-    slurm_content = re.sub(
-        r'\s+--model-dir\s+"[^"]*"',
-        '',
-        slurm_content
-    )
+    # Inject all paths from pipeline configuration
+    slurm_content = slurm_content.replace("{{VENV_ACTIVATE_PATH}}", f"{VENV_PATH}/bin/activate")
+    slurm_content = slurm_content.replace("{{PYTHON_CACHE}}", PYTHON_CACHE)
+    slurm_content = slurm_content.replace("{{HF_CACHE}}", HF_CACHE)
+    slurm_content = slurm_content.replace("{{NLTK_CACHE}}", NLTK_CACHE)
+    slurm_content = slurm_content.replace("{{TRANSCRIBE_SCRIPT}}", TRANSCRIBE_SCRIPT_PATH)
+    slurm_content = slurm_content.replace("{{WHISPER_MODEL}}", WHISPER_MODEL)
+    slurm_content = slurm_content.replace("{{ORAL_INPUT_PATH}}", oral_input_path)
+    slurm_content = slurm_content.replace("{{ORAL_OUTPUT_PATH}}", oral_output_path)
 
-    # Overwrite the main slurm job file with updated content
+    # Overwrite the main slurm job file with injected values
     with open(slurm_job_path, "w") as f:
         f.write(slurm_content)
 

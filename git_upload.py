@@ -48,7 +48,9 @@ def git_standard_pipeline(
             subprocess.run(["git", "clone", remote_url, git_repo_folder], check=True)
             
             # Disable credential helper for this repo so it MUST use the token in the URL
-            run(["git", "config", "--local", "--unset", "credential.helper"], cwd=git_repo_folder)
+            # Use check=False to ignore error if credential.helper is not set
+            subprocess.run(["git", "config", "--local", "--unset", "credential.helper"], 
+                         cwd=git_repo_folder, check=False)
         
         else:
             print("Updating existing repository...")
