@@ -59,23 +59,33 @@ def download_models(model_name="large-v3", cache_dir=None, languages=None, compu
         languages = ["en", "es", "fr", "de"]
     
     print(f"Downloading WhisperX model: {model_name}...")
+    print("This may take several minutes for large models...")
+    print(f"Model will be cached at: {os.environ.get('HF_HOME', 'default cache')}")
+    sys.stdout.flush()  # Force output to show immediately
+    
     try:
         model = whisperx.load_model(model_name, device, compute_type=compute_type)
         print(f"✓ WhisperX model '{model_name}' downloaded successfully!")
+        sys.stdout.flush()
         del model
     except Exception as e:
         print(f"✗ Error downloading WhisperX model: {e}")
+        sys.stdout.flush()
         return False
     
     print(f"\nDownloading alignment models for languages: {', '.join(languages)}...")
+    sys.stdout.flush()
     for lang in languages:
         try:
             print(f"  Downloading alignment model for '{lang}'...")
+            sys.stdout.flush()
             align_model, metadata = whisperx.load_align_model(language_code=lang, device=device)
             print(f"  ✓ Alignment model for '{lang}' downloaded!")
+            sys.stdout.flush()
             del align_model
         except Exception as e:
             print(f"  ✗ Could not download alignment for '{lang}': {e}")
+            sys.stdout.flush()
     
     cache_location = os.environ.get('HF_HOME', 'default HuggingFace cache')
     print(f"\n{'='*60}")

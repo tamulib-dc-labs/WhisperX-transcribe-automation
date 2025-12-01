@@ -116,27 +116,19 @@ def run_command(cmd, step_num, description, shell=False, env=None):
     try:
         if shell:
             result = subprocess.run(cmd, shell=True, check=True, 
-                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
                                    text=True, executable='/bin/bash', env=run_env)
         else:
-            result = subprocess.run(cmd, check=True,
-                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
-                                   text=True, env=run_env)
-        
-        if result.stdout:
-            print(result.stdout)
-        if result.stderr:
-            # Print stderr but don't treat as error if exit code is 0
-            print(result.stderr, file=sys.stderr)
+            # Stream output in realtime instead of buffering
+            result = subprocess.run(cmd, check=True, text=True, env=run_env)
         
         log_step(step_num, description, "COMPLETED")
         return True
         
     except subprocess.CalledProcessError as e:
         log_step(step_num, description, "FAILED")
-        if e.stdout:
+        if hasattr(e, 'stdout') and e.stdout:
             print(f"Output: {e.stdout}")
-        if e.stderr:
+        if hasattr(e, 'stderr') and e.stderr:
             print(f"Error output: {e.stderr}", file=sys.stderr)
         print(f"Return code: {e.returncode}", file=sys.stderr)
         return False
