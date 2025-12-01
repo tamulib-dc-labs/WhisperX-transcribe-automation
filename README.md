@@ -84,23 +84,47 @@ python d_whisperx.py
 
 All configuration is centralized in **`pipeline_2.py`** at the top of the file. Edit these variables according to your setup:
 
-### File Paths
+### Automatic Path Configuration (No User Changes Needed)
+These paths are **automatically configured** and don't require user modification:
+
 ```python
-DOWNLOAD_SCRIPT_PATH = "/path/to/download_automation_3.py"
-TRANSCRIBE_SCRIPT_PATH = "/path/to/transcribe.py"
-GIT_UPLOAD_SCRIPT_PATH = "/path/to/git_upload.py"
-SLURM_JOB_PATH = "/path/to/run_1.slurm"
+# Automatically set to the directory containing pipeline_2.py
+WORKING_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# All scripts automatically reference WORKING_DIR
+DOWNLOAD_SCRIPT_PATH = f"{WORKING_DIR}/download_automation_3.py"
+MODEL_DOWNLOAD_SCRIPT_PATH = f"{WORKING_DIR}/d_whisperx.py"
+TRANSCRIBE_SCRIPT_PATH = f"{WORKING_DIR}/transcribe.py"
+GIT_UPLOAD_SCRIPT_PATH = f"{WORKING_DIR}/git_upload.py"
+SLURM_JOB_PATH = f"{WORKING_DIR}/run_1.slurm"
+
+# Git repository automatically set to parent directory
+GIT_REPO_PATH = os.path.join(os.path.dirname(WORKING_DIR), "edge-grant-json-and-vtts")
 ```
 
-### Working Directories
+**Directory Structure:**
+```
+parent_directory/
+├── WhisperX-transcribe-automation/  ← WORKING_DIR (this repo)
+│   ├── pipeline_2.py
+│   ├── download_automation_3.py
+│   ├── transcribe.py
+│   ├── git_upload.py
+│   ├── d_whisperx.py
+│   ├── run_1.slurm
+│   ├── requirements.txt
+│   └── data/
+│       ├── oral_input/
+│       └── oral_output/
+└── edge-grant-json-and-vtts/        ← GIT_REPO_PATH (output repo)
+```
+
+### Data Directories (Automatically Created)
 ```python
-WORKING_DIR = "/path/to/your/working/directory"  # Main working directory
 DATA_FOLDER = "data"  # Folder name for data (created under WORKING_DIR)
 ORAL_INPUT_FOLDER = "oral_input"   # Input folder (under data/)
 ORAL_OUTPUT_FOLDER = "oral_output" # Output folder (under data/)
 # Results in: WORKING_DIR/data/oral_input and WORKING_DIR/data/oral_output
-
-GIT_REPO_PATH = "/path/to/git_repositories/your-repo"  # OUTSIDE working directory
 ```
 
 ### SMB Network Share Settings
@@ -287,8 +311,9 @@ The pipeline executes these steps in order:
 └─────────────────────────────────────────────────────────────────┘
 
 **Important Notes:**
-- WORKING_DIR is your local clone of WhisperX-transcribe-automation repo
-- GIT_REPO_PATH is a separate repo for transcription OUTPUT files
+- WORKING_DIR is automatically set to the repo directory (WhisperX-transcribe-automation)
+- GIT_REPO_PATH is automatically set to `../edge-grant-json-and-vtts` (one level above WORKING_DIR)
+- All script paths are automatically configured - no manual path updates needed
 - Steps 1-2 MUST run before Step 3 (venv creation)
 - WhisperX PACKAGE (Python library) → installed in Step 3 via requirements.txt
 - WhisperX MODEL FILES (AI models) → downloaded in Step 6 via d_whisperx.py

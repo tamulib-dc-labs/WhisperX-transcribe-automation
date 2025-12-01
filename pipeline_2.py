@@ -35,7 +35,7 @@ VENV_PATH = f"{WORKING_DIR}/{VENV_NAME}"  # Full path to virtual environment
 MODULE_LOAD_COMMAND = "ml GCCcore/10.3.0 Python FFmpeg CUDA"  # Customize as needed
 
 # --- File Paths (Scripts) ---
-# All scripts are in the WORKING_DIR (local git repo)
+# All scripts and SLURM job are in the WORKING_DIR (local git repo)
 DOWNLOAD_SCRIPT_PATH = f"{WORKING_DIR}/download_automation_3.py"
 MODEL_DOWNLOAD_SCRIPT_PATH = f"{WORKING_DIR}/d_whisperx.py"
 TRANSCRIBE_SCRIPT_PATH = f"{WORKING_DIR}/transcribe.py"
@@ -48,10 +48,10 @@ DATA_FOLDER = "data"  # Folder name for data (will be created under WORKING_DIR)
 ORAL_INPUT_FOLDER = "oral_input"   # Input folder name (under data/)
 ORAL_OUTPUT_FOLDER = "oral_output" # Output folder name (under data/)
 
-# --- Git Repository for Output (OUTSIDE working directory) ---
+# --- Git Repository for Output (one level above WORKING_DIR) ---
 # This is where transcription OUTPUT will be pushed (edge-grant-json-and-vtts repo)
-# This is DIFFERENT from WORKING_DIR (which is the WhisperX-transcribe-automation repo)
-GIT_REPO_PATH = "/scratch/user/jvk_chaitanya/git_repositories/edge-grant-json-and-vtts"
+# Automatically set to parent directory of WORKING_DIR
+GIT_REPO_PATH = os.path.join(os.path.dirname(WORKING_DIR), "edge-grant-json-and-vtts")
 
 # --- SMB Network Share Settings ---
 SMB_SERVER = "cifs.library.tamu.edu"
