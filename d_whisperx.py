@@ -10,29 +10,6 @@ import argparse
 import whisperx
 import torch
 
-# Fix for PyTorch 2.6+ weights_only issue with pyannote models
-# Allow safe loading of omegaconf types used by pyannote
-try:
-    import omegaconf
-    torch.serialization.add_safe_globals([
-        omegaconf.ListConfig,
-        omegaconf.DictConfig,
-        omegaconf.base.ContainerMetadata,
-        omegaconf.base.Node,
-    ])
-except (ImportError, AttributeError):
-    pass  # If omegaconf not installed or attributes missing, will handle differently
-
-# Alternative fix: Patch torch.load to use weights_only=False for pyannote compatibility
-import functools
-_original_torch_load = torch.load
-@functools.wraps(_original_torch_load)
-def _patched_torch_load(*args, **kwargs):
-    if 'weights_only' not in kwargs:
-        kwargs['weights_only'] = False
-    return _original_torch_load(*args, **kwargs)
-torch.load = _patched_torch_load
-
 def download_models(model_name="large-v3", cache_dir=None, languages=None, compute_type="float16"):
     """
     Download WhisperX models and alignment models.
@@ -52,8 +29,15 @@ def download_models(model_name="large-v3", cache_dir=None, languages=None, compu
     # Set offline mode to False for downloading
     os.environ['HF_HUB_OFFLINE'] = '0'
     
-    # Use CPU for downloading to avoid GPU memory issues
-    device = "cpu"
+    # Auto-detect device (GPU if available, else CPU)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    
+    # Adjust compute type based on device
+    if device == "cpu" and compute_type == "float16":
+        print("Warning: CPU detected, float16 not supported. Using int8 instead.")
+        compute_type = "int8"
+    
+    print(f"Using device: {device}, compute_type: {compute_type}")
     
     if languages is None:
         languages = ["en", "es", "fr", "de"]
