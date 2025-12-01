@@ -295,6 +295,13 @@ def transcribe_directory(
 # Move this function to module level so it can be pickled
 def _process_gpu_batch(args):
     """Process a batch of files on a specific GPU (module-level function for pickling)"""
+    # Fix for PyTorch 2.6+ weights_only issue - must be done in each worker process
+    try:
+        from omegaconf import ListConfig, DictConfig
+        torch.serialization.add_safe_globals([ListConfig, DictConfig])
+    except ImportError:
+        pass
+    
     gpu_id, file_batch, output_path, model_name, model_dir, batch_size, compute_type, language, max_line_width, max_line_count, highlight_words = args
     
     # Set CUDA_VISIBLE_DEVICES to make only this GPU visible
