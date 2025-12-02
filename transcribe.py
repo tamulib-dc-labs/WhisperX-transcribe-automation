@@ -14,6 +14,11 @@ import argparse
 import multiprocessing as mp
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
+# Set NLTK data path from environment variable (set by SLURM job)
+import nltk
+if 'NLTK_DATA' in os.environ:
+    nltk.data.path.append(os.environ['NLTK_DATA'])
+
 # Fix for PyTorch 2.6+ weights_only issue - set weights_only=False to allow loading pyannote models
 try:
     torch.serialization.add_safe_globals = lambda x: None  # Disable safe globals check
