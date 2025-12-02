@@ -1,5 +1,6 @@
 import os
 import json
+import sys
 import torch
 import whisperx
 from whisperx.utils import get_writer
@@ -12,6 +13,23 @@ import warnings
 import argparse
 import multiprocessing as mp
 from concurrent.futures import ProcessPoolExecutor, as_completed
+
+# Fix for PyTorch 2.6+ weights_only issue - set weights_only=False to allow loading pyannote models
+try:
+    torch.serialization.add_safe_globals = lambda x: None  # Disable safe globals check
+    import functools
+    _original_torch_load = torch.load
+    @functools.wraps(_original_torch_load)
+    def _patched_torch_load(*args, **kwargs):
+        kwargs['weights_only'] = False
+        return _original_torch_load(*args, **kwargs)
+    torch.load = _patched_torch_load
+    print("✓ PyTorch 2.6+ compatibility patch applied: weights_only=False for all torch.load calls")
+    sys.stdout.flush()
+except Exception as e:
+    print(f"⚠ WARNING: Failed to apply PyTorch compatibility patch: {e}")
+    print("Model loading may fail on GPU nodes with PyTorch 2.6+")
+    sys.stdout.flush()
 
 warnings.filterwarnings('ignore')
 
