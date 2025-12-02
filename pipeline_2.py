@@ -76,7 +76,6 @@ GIT_TOKEN = ""  # Set your token here or use environment variable GIT_TOKEN
 CACHE_DIR = "/scratch/user/jvk_chaitanya/cache"  # Main cache directory
 # All cache subdirectories are automatically created under CACHE_DIR:
 HF_CACHE = f"{CACHE_DIR}/huggingface"  # HuggingFace models cache (WhisperX models stored here)
-PYTHON_CACHE = f"{CACHE_DIR}/python_packages"  # Python packages cache
 NLTK_CACHE = f"{CACHE_DIR}/nltk_data"  # NLTK data cache
 # Note: MODEL_DIR is optional and only needed if you want to use a specific local model path
 # By default, WhisperX will use models from HF_CACHE automatically
@@ -229,8 +228,6 @@ def main():
     if HF_CACHE: 
         os.environ['HF_HOME'] = HF_CACHE
         os.makedirs(HF_CACHE, exist_ok=True)
-    if PYTHON_CACHE: 
-        os.makedirs(PYTHON_CACHE, exist_ok=True)
     if NLTK_CACHE: 
         os.environ['NLTK_DATA'] = NLTK_CACHE
         os.makedirs(NLTK_CACHE, exist_ok=True)
@@ -244,14 +241,8 @@ def main():
         os.makedirs(git_repo_parent, exist_ok=True)
         print(f"Git repository parent directory: {git_repo_parent}")
 
-    # Set PYTHONPATH for Python packages
-    pythonpath_value = PYTHON_CACHE if PYTHON_CACHE else '/scratch/user/jvk_chaitanya/python_packages'
-    existing_pythonpath = os.environ.get('PYTHONPATH', '')
-    if existing_pythonpath:
-        os.environ['PYTHONPATH'] = f"{pythonpath_value}:{existing_pythonpath}"
-    else:
-        os.environ['PYTHONPATH'] = pythonpath_value
-    print(f"PYTHONPATH set to: {os.environ['PYTHONPATH']}")
+    # PYTHONPATH will be set in SLURM job if needed
+    # Venv handles all package dependencies automatically
 
     # --- PRE-CHECK: Get Password ---
     smb_password = SMB_PASSWORD
@@ -411,7 +402,6 @@ def main():
 
     # Inject all paths from pipeline configuration
     slurm_content = slurm_content.replace("{{VENV_ACTIVATE_PATH}}", f"{VENV_PATH}/bin/activate")
-    slurm_content = slurm_content.replace("{{PYTHON_CACHE}}", PYTHON_CACHE)
     slurm_content = slurm_content.replace("{{HF_CACHE}}", HF_CACHE)
     slurm_content = slurm_content.replace("{{NLTK_CACHE}}", NLTK_CACHE)
     slurm_content = slurm_content.replace("{{TRANSCRIBE_SCRIPT}}", TRANSCRIBE_SCRIPT_PATH)

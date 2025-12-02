@@ -156,9 +156,7 @@ GIT_TOKEN = "your-github-token"  # Personal Access Token with repo permissions
 # These directories store downloaded models and cache data to avoid re-downloading
 CACHE_DIR = "/path/to/cache"  # Main cache directory
 HF_CACHE = "/path/to/cache/huggingface"  # HuggingFace models cache
-PYTHON_CACHE = "/path/to/cache/python_packages"  # Python packages cache
 NLTK_CACHE = "/path/to/cache/nltk_data"  # NLTK data cache
-MODEL_CACHE = "/path/to/cache/models"  # WhisperX models cache
 MODEL_DIR = None  # Optional: specific model directory for offline/local models
 ```
 
