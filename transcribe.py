@@ -305,6 +305,19 @@ def transcribe_directory(
 # Move this function to module level so it can be pickled
 def _process_gpu_batch(args):
     """Process a batch of files on a specific GPU (module-level function for pickling)"""
+    # Apply PyTorch patch in worker process (each worker is a separate Python interpreter)
+    try:
+        import functools
+        torch.serialization.add_safe_globals = lambda x: None
+        _original_torch_load = torch.load
+        @functools.wraps(_original_torch_load)
+        def _patched_torch_load(*args, **kwargs):
+            kwargs['weights_only'] = False
+            return _original_torch_load(*args, **kwargs)
+        torch.load = _patched_torch_load
+    except Exception:
+        pass  # Silently fail in worker, main process already logged the status
+    
     gpu_id, file_batch, output_path, model_name, model_dir, batch_size, compute_type, language, max_line_width, max_line_count, highlight_words = args
     
     # Set CUDA_VISIBLE_DEVICES to make only this GPU visible
