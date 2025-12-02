@@ -21,6 +21,8 @@ export PYTHONPATH={{PYTHON_CACHE}}:$PYTHONPATH
 # Set HuggingFace cache directory
 export HF_HOME={{HF_CACHE}}
 
+# Set cuDNN library path - use pip-installed cuDNN (nvidia-cudnn-cu12)
+# Must be BEFORE $LD_LIBRARY_PATH to take priority
 export LD_LIBRARY_PATH={{PYTHON_CACHE}}/nvidia/cudnn/lib:$LD_LIBRARY_PATH
 
 export NLTK_DATA={{NLTK_CACHE}}
