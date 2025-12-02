@@ -60,9 +60,11 @@ def download_models(model_name="large-v3", cache_dir=None, languages=None, compu
     if languages is None:
         languages = ["en", "es", "fr", "de"]
     
+    cache_location = os.environ.get('HF_HOME', os.path.expanduser('~/.cache/huggingface'))
+    
     print(f"Downloading WhisperX model: {model_name}...")
     print("This may take several minutes for large models...")
-    print(f"Model will be cached at: {os.environ.get('HF_HOME', 'default cache')}")
+    print(f"Model will be cached at: {cache_location}")
     sys.stdout.flush()  # Force output to show immediately
     
     try:
@@ -89,7 +91,6 @@ def download_models(model_name="large-v3", cache_dir=None, languages=None, compu
             print(f"  ✗ Could not download alignment for '{lang}': {e}")
             sys.stdout.flush()
     
-    cache_location = os.environ.get('HF_HOME', 'default HuggingFace cache')
     print(f"\n{'='*60}")
     print(f"All models downloaded to: {cache_location}")
     print(f"{'='*60}")

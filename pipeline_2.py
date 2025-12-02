@@ -361,14 +361,13 @@ def main():
     ):
         sys.exit(1)
 
-    # Step 8: Download WhisperX models (if enabled and not already cached)
+    # Step 8: Download WhisperX models (if enabled)
     # Note: WhisperX is installed via requirements.txt in venv
     # This step only downloads the model files for offline use
     if DOWNLOAD_MODELS_BEFORE_SLURM:
-        log_step(8, "Checking/Downloading WhisperX model files", "STARTED")
+        log_step(8, "Downloading WhisperX model files", "STARTED")
         print("This ensures SLURM job can run offline without internet access.")
         print("Note: WhisperX package should already be installed in venv via requirements.txt")
-        print("Note: If models are already cached, this step will skip downloading.")
         
         # Check if we're on a GPU node or CPU node
         import subprocess
