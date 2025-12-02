@@ -369,7 +369,17 @@ def main():
         print("This ensures SLURM job can run offline without internet access.")
         print("Note: WhisperX package should already be installed in venv via requirements.txt")
         print("Note: If models are already cached, this step will skip downloading.")
-        print("Note: Downloading with int8 (CPU compatible), will work with float16 on GPU.")
+        
+        # Check if we're on a GPU node or CPU node
+        import subprocess
+        gpu_check = subprocess.run(["nvidia-smi"], capture_output=True)
+        has_gpu = gpu_check.returncode == 0
+        
+        if not has_gpu:
+            print("WARNING: No GPU detected on this node (likely a login node).")
+            print("Model download will use CPU with int8 compute type.")
+            print("For faster download, consider running this on a GPU node or skipping")
+            print("by setting DOWNLOAD_MODELS_BEFORE_SLURM = False")
         
         # Set environment to suppress warnings
         model_env = os.environ.copy()
