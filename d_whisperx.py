@@ -33,9 +33,10 @@ def download_models(model_name="large-v3", cache_dir=None, languages=None, compu
     device = "cuda" if torch.cuda.is_available() else "cpu"
     
     # Adjust compute type based on device
+    original_compute_type = compute_type
     if device == "cpu" and compute_type == "float16":
-        print("Warning: CPU detected, float16 not supported. Using int8 instead.")
         compute_type = "int8"
+        print(f"Warning: CPU detected, float16 not supported. Switching from {original_compute_type} to {compute_type}.")
     
     print(f"Using device: {device}, compute_type: {compute_type}")
     
