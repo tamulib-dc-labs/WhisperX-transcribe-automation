@@ -10,35 +10,22 @@ import argparse
 import whisperx
 import torch
 
-# Fix for PyTorch 2.6+ weights_only issue when running on CPU
-# This is needed for model download on login nodes
-# GPU nodes don't seem to have this issue
+# Fix for PyTorch 2.6+ weights_only issue - set weights_only=False to allow loading pyannote models
 try:
-    import omegaconf
-    torch.serialization.add_safe_globals([
-        omegaconf.ListConfig,
-        omegaconf.DictConfig,
-    ])
-    # Try to add base classes if available
-    try:
-        torch.serialization.add_safe_globals([
-            omegaconf.base.ContainerMetadata,
-            omegaconf.base.Node,
-        ])
-    except AttributeError:
-        pass
-except ImportError:
-    pass
-
-# Fallback: patch torch.load to use weights_only=False
-import functools
-_original_torch_load = torch.load
-@functools.wraps(_original_torch_load)
-def _patched_torch_load(*args, **kwargs):
-    if 'weights_only' not in kwargs:
+    torch.serialization.add_safe_globals = lambda x: None  # Disable safe globals check
+    import functools
+    _original_torch_load = torch.load
+    @functools.wraps(_original_torch_load)
+    def _patched_torch_load(*args, **kwargs):
         kwargs['weights_only'] = False
-    return _original_torch_load(*args, **kwargs)
-torch.load = _patched_torch_load
+        return _original_torch_load(*args, **kwargs)
+    torch.load = _patched_torch_load
+    print("✓ PyTorch 2.6+ compatibility patch applied: weights_only=False for all torch.load calls")
+    sys.stdout.flush()
+except Exception as e:
+    print(f"⚠ WARNING: Failed to apply PyTorch compatibility patch: {e}")
+    print("Model loading may fail on CPU nodes with PyTorch 2.6+")
+    sys.stdout.flush()
 
 def download_models(model_name="large-v3", cache_dir=None, languages=None, compute_type="float16"):
     """
