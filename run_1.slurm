@@ -39,6 +39,7 @@ export TRANSFORMERS_OFFLINE=1
 # PATHS WILL BE INJECTED BY PIPELINE
 python {{TRANSCRIBE_SCRIPT}} \
     --model "{{WHISPER_MODEL}}" \
+    --language "en" \
     --parallel \
     "{{ORAL_INPUT_PATH}}/" \
     "{{ORAL_OUTPUT_PATH}}/"

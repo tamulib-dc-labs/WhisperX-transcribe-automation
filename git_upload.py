@@ -69,13 +69,15 @@ def git_standard_pipeline(
 
         # --- STEP 3: Copy Files ---
         print("SYNCING FILES...")
-        print("Copying from Source -> Git Repo...")
+        print("Copying from Source -> Git Repo (additions/updates only)...")
         
         # We use 'rsync' because it's built into Linux clusters and handles 
         # merging folders safely without deleting existing files in the destination.
         # -a: Archive mode (keeps permissions/dates)
         # -v: Verbose
+        # --ignore-existing: Skip files that already exist in destination
         # --exclude '.git': Critical to not corrupt the git folder
+        # NOTE: This will only ADD new files and UPDATE changed files, never DELETE
         cmd_rsync = [
             "rsync", "-av", 
             "--exclude", ".git",
@@ -85,8 +87,9 @@ def git_standard_pipeline(
         subprocess.run(cmd_rsync, check=True)
 
         # --- STEP 4: Git Add, Commit, Push ---
-        print("Staging changes...")
-        run(["git", "add", "."], cwd=git_repo_folder)
+        print("Staging changes (new and modified files only)...")
+        # Only add new and modified files, don't stage deletions
+        run(["git", "add", "--all", "--ignore-removal"], cwd=git_repo_folder)
         
         # Check if there are actually changes to commit
         status = subprocess.run(
