@@ -15,6 +15,13 @@ ml GCCcore/10.3.0 FFmpeg CUDA Python
 # Python venv - PATH WILL BE INJECTED BY PIPELINE
 source {{VENV_ACTIVATE_PATH}}
 
+# Set cuDNN library path from venv's nvidia-cudnn-cu12 package
+# This must be set before running Python to avoid "Unable to load libcudnn_cnn.so" errors
+CUDNN_PATH=$(python -c "import nvidia.cudnn; print(nvidia.cudnn.__path__[0])" 2>/dev/null)
+if [ -n "$CUDNN_PATH" ]; then
+    export LD_LIBRARY_PATH="$CUDNN_PATH/lib:$LD_LIBRARY_PATH"
+fi
+
 # Set HuggingFace cache directory
 export HF_HOME={{HF_CACHE}}
 
