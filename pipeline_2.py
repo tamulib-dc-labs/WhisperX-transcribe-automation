@@ -393,6 +393,32 @@ def main():
         ):
             print("Warning: Model download failed. SLURM job may fail if it needs to download models.")
             # Don't exit - let user decide if they want to continue
+    
+    # Step 8.5: Download NLTK data (punkt_tab for sentence tokenization)
+    log_step("8.5", "Downloading NLTK data", "STARTED")
+    print("Downloading NLTK punkt_tab for sentence tokenization...")
+    
+    nltk_download_script = f"""
+import nltk
+import ssl
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
+
+nltk.download('punkt_tab', download_dir='{NLTK_CACHE}', quiet=False)
+print("✓ NLTK punkt_tab downloaded successfully")
+"""
+    
+    nltk_cmd = [python_cmd, "-c", nltk_download_script]
+    if not run_command(
+        nltk_cmd,
+        "8.5",
+        "Download NLTK punkt_tab data"
+    ):
+        print("Warning: NLTK data download failed. Transcription may fail.")
 
     # Step 9: Update SLURM job file with actual paths before submission
     slurm_job_path = os.path.abspath(SLURM_JOB_PATH)
