@@ -147,11 +147,31 @@ class TranscriptionPipeline:
         download_script = f"""
 import os
 import sys
+from pathlib import Path
 
 # Set cache directories
 os.environ['HF_HOME'] = '{self.config.hf_cache}'
 os.environ['HF_HUB_OFFLINE'] = '0'
 os.makedirs('{self.config.hf_cache}', exist_ok=True)
+
+# Check if model already exists
+model_name = "{self.config.whisper_model}"
+cache_path = Path('{self.config.hf_cache}')
+
+# WhisperX models are stored in hub/models--Systran--faster-whisper-<model>
+model_cache_pattern = f"**/models--Systran--faster-whisper-*{{model_name}}*"
+existing_models = list(cache_path.glob(model_cache_pattern))
+
+if existing_models:
+    print(f"✓ Model '{{model_name}}' already exists in cache:")
+    print(f"  {{existing_models[0]}}")
+    print(f"  Skipping download.")
+    sys.stdout.flush()
+    model_exists = True
+else:
+    print(f"Model '{{model_name}}' not found in cache, downloading...")
+    sys.stdout.flush()
+    model_exists = False
 
 # Import after environment is set
 import torch
@@ -184,38 +204,61 @@ else:
     print(f"Using GPU mode with compute_type={{compute_type}}")
 sys.stdout.flush()
 
-print(f"Downloading WhisperX model: {self.config.whisper_model}...")
-sys.stdout.flush()
-
-try:
-    model = whisperx.load_model("{self.config.whisper_model}", device, compute_type=compute_type)
-    print(f"✓ WhisperX model '{self.config.whisper_model}' downloaded successfully!")
+# Download WhisperX model only if not exists
+if not model_exists:
+    print(f"Downloading WhisperX model: {{model_name}}...")
     sys.stdout.flush()
-    del model
-except Exception as e:
-    print(f"✗ Error downloading WhisperX model: {{e}}")
-    sys.stdout.flush()
-    sys.exit(1)
+    
+    try:
+        model = whisperx.load_model(model_name, device, compute_type=compute_type)
+        print(f"✓ WhisperX model '{{model_name}}' downloaded successfully!")
+        sys.stdout.flush()
+        del model
+    except Exception as e:
+        print(f"✗ Error downloading WhisperX model: {{e}}")
+        sys.stdout.flush()
+        sys.exit(1)
+else:
+    # Still load to verify it works
+    print(f"Verifying cached model can be loaded...")
+    try:
+        model = whisperx.load_model(model_name, device, compute_type=compute_type)
+        print(f"✓ Cached model verified successfully!")
+        sys.stdout.flush()
+        del model
+    except Exception as e:
+        print(f"✗ Error loading cached model: {{e}}")
+        print(f"  Cache may be corrupted. Try deleting: {self.config.hf_cache}")
+        sys.stdout.flush()
+        sys.exit(1)
 
 # Download alignment models
 languages = {self.config.alignment_languages}
-print(f"\\nDownloading alignment models for languages: {{', '.join(languages)}}...")
+print(f"\\nChecking alignment models for languages: {{', '.join(languages)}}...")
 sys.stdout.flush()
 
 for lang in languages:
-    try:
-        print(f"  Downloading alignment model for '{{lang}}'...")
+    # Check if alignment model exists
+    align_cache_pattern = f"**/models--*alignment*{{lang}}*"
+    existing_align = list(cache_path.glob(align_cache_pattern))
+    
+    if existing_align:
+        print(f"  ✓ Alignment model for '{{lang}}' already exists, skipping.")
         sys.stdout.flush()
-        align_model, metadata = whisperx.load_align_model(language_code=lang, device=device)
-        print(f"  ✓ Alignment model for '{{lang}}' downloaded!")
-        sys.stdout.flush()
-        del align_model
-    except Exception as e:
-        print(f"  ✗ Could not download alignment for '{{lang}}': {{e}}")
-        sys.stdout.flush()
+    else:
+        try:
+            print(f"  Downloading alignment model for '{{lang}}'...")
+            sys.stdout.flush()
+            align_model, metadata = whisperx.load_align_model(language_code=lang, device=device)
+            print(f"  ✓ Alignment model for '{{lang}}' downloaded!")
+            sys.stdout.flush()
+            del align_model
+        except Exception as e:
+            print(f"  ✗ Could not download alignment for '{{lang}}': {{e}}")
+            sys.stdout.flush()
 
 print(f"\\n{{'='*60}}")
-print(f"All models downloaded to: {self.config.hf_cache}")
+print(f"All models cached at: {self.config.hf_cache}")
 print(f"{{'='*60}}")
 """
         
