@@ -21,9 +21,9 @@ from datetime import datetime
 CHECK_INTERVAL_MINS = 5  # How often to check SLURM job status (in minutes)
 
 # --- Working Directory ---
-# Main working directory - automatically set to this script's directory (the repo root)
+# Main working directory - automatically set to parent of legacy folder (the repo root)
 # This is your local clone of WhisperX-transcribe-automation repo
-WORKING_DIR = os.path.dirname(os.path.abspath(__file__))
+WORKING_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # --- Virtual Environment ---
 # Virtual environment will be created inside WORKING_DIR
@@ -35,12 +35,12 @@ VENV_PATH = f"{WORKING_DIR}/{VENV_NAME}"  # Full path to virtual environment
 MODULE_LOAD_COMMAND = "ml GCCcore/10.3.0 Python FFmpeg CUDA"  # Customize as needed
 
 # --- File Paths (Scripts) ---
-# All scripts and SLURM job are in the WORKING_DIR (local git repo)
-DOWNLOAD_SCRIPT_PATH = f"{WORKING_DIR}/download_automation_3.py"
-MODEL_DOWNLOAD_SCRIPT_PATH = f"{WORKING_DIR}/d_whisperx.py"
-TRANSCRIBE_SCRIPT_PATH = f"{WORKING_DIR}/transcribe.py"
-GIT_UPLOAD_SCRIPT_PATH = f"{WORKING_DIR}/git_upload.py"
-SLURM_JOB_PATH = f"{WORKING_DIR}/run_1.slurm"
+# All legacy scripts are in the legacy folder
+DOWNLOAD_SCRIPT_PATH = f"{WORKING_DIR}/legacy/download_automation_3.py"
+MODEL_DOWNLOAD_SCRIPT_PATH = f"{WORKING_DIR}/legacy/d_whisperx.py"
+TRANSCRIBE_SCRIPT_PATH = f"{WORKING_DIR}/legacy/transcribe.py"
+GIT_UPLOAD_SCRIPT_PATH = f"{WORKING_DIR}/legacy/git_upload.py"
+SLURM_JOB_PATH = f"{WORKING_DIR}/legacy/run_1.slurm"
 
 # --- Data Directories (relative to WORKING_DIR) ---
 # Data folder structure: WORKING_DIR/data/oral_input and WORKING_DIR/data/oral_output
