@@ -163,7 +163,7 @@ model_cache_pattern = f"**/models--Systran--faster-whisper-*{{model_name}}*"
 existing_models = list(cache_path.glob(model_cache_pattern))
 
 if existing_models:
-    print(f"✓ Model '{{model_name}}' already exists in cache:")
+    print(f"Model '{{model_name}}' already exists in cache:")
     print(f"  {{existing_models[0]}}")
     print(f"  Skipping download.")
     sys.stdout.flush()
@@ -189,10 +189,10 @@ try:
         return _original_torch_load(*args, **kwargs)
     
     torch.load = _patched_torch_load
-    print("✓ PyTorch 2.6+ compatibility patch applied")
+    print("PyTorch 2.6+ compatibility patch applied")
     sys.stdout.flush()
 except Exception as e:
-    print(f"⚠ WARNING: Failed to apply PyTorch patch: {{e}}")
+    print(f"WARNING: Failed to apply PyTorch patch: {{e}}")
     sys.stdout.flush()
 
 # Download models
@@ -211,11 +211,11 @@ if not model_exists:
     
     try:
         model = whisperx.load_model(model_name, device, compute_type=compute_type)
-        print(f"✓ WhisperX model '{{model_name}}' downloaded successfully!")
+        print(f"WhisperX model '{{model_name}}' downloaded successfully!")
         sys.stdout.flush()
         del model
     except Exception as e:
-        print(f"✗ Error downloading WhisperX model: {{e}}")
+        print(f"Error downloading WhisperX model: {{e}}")
         sys.stdout.flush()
         sys.exit(1)
 
@@ -230,18 +230,18 @@ for lang in languages:
     existing_align = list(cache_path.glob(align_cache_pattern))
     
     if existing_align:
-        print(f"  ✓ Alignment model for '{{lang}}' already exists, skipping.")
+        print(f"  Alignment model for '{{lang}}' already exists, skipping.")
         sys.stdout.flush()
     else:
         try:
             print(f"  Downloading alignment model for '{{lang}}'...")
             sys.stdout.flush()
             align_model, metadata = whisperx.load_align_model(language_code=lang, device=device)
-            print(f"  ✓ Alignment model for '{{lang}}' downloaded!")
+            print(f"  Alignment model for '{{lang}}' downloaded!")
             sys.stdout.flush()
             del align_model
         except Exception as e:
-            print(f"  ✗ Could not download alignment for '{{lang}}': {{e}}")
+            print(f"  Could not download alignment for '{{lang}}': {{e}}")
             sys.stdout.flush()
 
 print(f"\\n{{'='*60}}")
@@ -269,7 +269,7 @@ else:
     ssl._create_default_https_context = _create_unverified_https_context
 
 nltk.download('punkt_tab', download_dir='{self.config.nltk_cache}', quiet=False)
-print("✓ NLTK punkt_tab downloaded successfully")
+print("NLTK punkt_tab downloaded successfully")
 """
         
         nltk_cmd = [self.config.venv_python, "-c", nltk_script]
@@ -291,6 +291,13 @@ print("✓ NLTK punkt_tab downloaded successfully")
         slurm_content = slurm_content.replace("{{WHISPER_MODEL}}", self.config.whisper_model)
         slurm_content = slurm_content.replace("{{ORAL_INPUT_PATH}}", self.config.oral_input_path)
         slurm_content = slurm_content.replace("{{ORAL_OUTPUT_PATH}}", self.config.oral_output_path)
+        
+        # Inject language argument (or omit if None for auto-detection)
+        if self.config.language:
+            language_arg = f'--language "{self.config.language}" \\\n    '
+        else:
+            language_arg = ''
+        slurm_content = slurm_content.replace("{{LANGUAGE_ARG}}", language_arg)
         
         # Write updated SLURM file
         updated_slurm = os.path.join(self.config.working_dir, "run_job.slurm")

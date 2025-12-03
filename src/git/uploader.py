@@ -54,7 +54,7 @@ class GitUploader:
             bool: True if successful
         """
         try:
-            subprocess.run(
+            result = subprocess.run(
                 args,
                 cwd=cwd or self.repo_folder,
                 check=True,
@@ -64,7 +64,11 @@ class GitUploader:
             return True
         except subprocess.CalledProcessError as e:
             print(f"Git command failed: {' '.join(args)}")
-            print(f"Error: {e.stderr}")
+            print(f"Return code: {e.returncode}")
+            if e.stdout:
+                print(f"stdout: {e.stdout}")
+            if e.stderr:
+                print(f"stderr: {e.stderr}")
             return False
     
     def setup_repository(self) -> bool:
@@ -166,7 +170,7 @@ class GitUploader:
         """
         # Stage changes (only additions and modifications, no deletions)
         print("Staging changes (new and modified files only)...")
-        if not self._run_git_command(["git", "add", "--all", "--ignore-removal"]):
+        if not self._run_git_command(["git", "add", "."]):
             return False
         
         # Check if there are changes to commit
@@ -192,7 +196,7 @@ class GitUploader:
         if not self._run_git_command(["git", "push", "-u", "origin", branch_name]):
             return False
         
-        print(f"✓ SUCCESS! Pull Request URL: https://github.com/{self.owner}/{self.repo_name}/pull/new/{branch_name}")
+        print(f"SUCCESS! Pull Request URL: https://github.com/{self.owner}/{self.repo_name}/pull/new/{branch_name}")
         return True
     
     def upload(self) -> bool:

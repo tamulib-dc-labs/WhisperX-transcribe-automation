@@ -52,7 +52,7 @@ class FileManager:
                     print(f"Failed to delete {item_path}: {e}")
                     return False
             
-            print(f"✓ Cleared {file_count} files from {directory_path}")
+            print(f"Cleared {file_count} files from {directory_path}")
             return True
             
         except Exception as e:
