@@ -188,24 +188,15 @@ class CommandRunner:
                 check=True
             )
             
-            # Show the sbatch output
-            output = result.stdout.strip()
-            print(output)
-            print(f"[DEBUG] sbatch output: '{output}'")
-            
             # Extract job ID using regex (format: "Submitted batch job 12345")
+            output = result.stdout.strip()
             match = re.search(r"Submitted batch job (\d+)", output)
             
             if match:
                 job_id = match.group(1)
-                print(f"[DEBUG] Extracted job_id from regex: '{job_id}'")
-                print(f"\n✓ SUCCESS: Job submitted. Detected Job ID: {job_id}")
-                sys.stdout.flush()
                 return job_id
             else:
-                print(f"[DEBUG] Could not parse Job ID from sbatch output using regex")
                 print(f"ERROR: Could not parse Job ID from sbatch output.")
-                sys.stdout.flush()
                 return None
             
         except subprocess.CalledProcessError as e:
@@ -230,27 +221,16 @@ class CommandRunner:
             str: Job status (PENDING, RUNNING, COMPLETED, etc.) or None
         """
         try:
-            print(f"[DEBUG] Checking status for job_id: '{job_id}'")
-            
-            # Use squeue to check if job is in queue (same as legacy approach)
-            squeue_cmd = ["squeue", "--job", job_id]
-            print(f"[DEBUG] Running: {' '.join(squeue_cmd)}")
-            
+            # Use squeue to check if job is in queue
             result = subprocess.run(
-                squeue_cmd,
+                ["squeue", "--job", job_id],
                 capture_output=True,
                 text=True,
                 check=False
             )
             
-            print(f"[DEBUG] squeue returncode: {result.returncode}")
-            print(f"[DEBUG] squeue stdout: '{result.stdout.strip()}'")
-            print(f"[DEBUG] squeue stderr: '{result.stderr.strip()}'")
-            
             # Check if job_id appears in output (job is still in queue)
             if job_id in result.stdout:
-                print(f"[DEBUG] Job {job_id} found in squeue output")
-                
                 # Extract actual status from output
                 lines = result.stdout.strip().split('\n')
                 if len(lines) > 1:  # Has header + data
@@ -261,37 +241,25 @@ class CommandRunner:
                     for token in tokens:
                         if token in ["PD", "R", "CG", "PENDING", "RUNNING", "COMPLETING"]:
                             status = "PENDING" if token == "PD" else "RUNNING" if token == "R" else token
-                            print(f"[DEBUG] Status from squeue: '{status}'")
                             return status
                     # Default to RUNNING if in queue but can't parse status
-                    print(f"[DEBUG] Job in queue, defaulting to RUNNING")
                     return "RUNNING"
                 else:
                     return "RUNNING"
             else:
-                # Job not in queue - assume completed
-                print(f"[DEBUG] Job {job_id} not in squeue, checking sacct for final status")
-                
-                sacct_cmd = ["sacct", "-j", job_id, "-n", "-o", "State"]
-                print(f"[DEBUG] Running: {' '.join(sacct_cmd)}")
-                
+                # Job not in queue - check sacct for final status
                 result = subprocess.run(
-                    sacct_cmd,
+                    ["sacct", "-j", job_id, "-n", "-o", "State"],
                     capture_output=True,
                     text=True,
                     check=False
                 )
                 
-                print(f"[DEBUG] sacct returncode: {result.returncode}")
-                print(f"[DEBUG] sacct stdout: '{result.stdout.strip()}'")
-                
                 if result.returncode == 0 and result.stdout.strip():
                     status_line = result.stdout.strip().split('\n')[0].strip()
-                    print(f"[DEBUG] Status from sacct: '{status_line}'")
                     return status_line
                 else:
                     # If not in squeue and not in sacct, assume completed
-                    print(f"[DEBUG] No status found, assuming COMPLETED")
                     return "COMPLETED"
                     
         except Exception as e:

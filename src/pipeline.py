@@ -218,19 +218,6 @@ if not model_exists:
         print(f"✗ Error downloading WhisperX model: {{e}}")
         sys.stdout.flush()
         sys.exit(1)
-else:
-    # Still load to verify it works
-    print(f"Verifying cached model can be loaded...")
-    try:
-        model = whisperx.load_model(model_name, device, compute_type=compute_type)
-        print(f"✓ Cached model verified successfully!")
-        sys.stdout.flush()
-        del model
-    except Exception as e:
-        print(f"✗ Error loading cached model: {{e}}")
-        print(f"  Cache may be corrupted. Try deleting: {self.config.hf_cache}")
-        sys.stdout.flush()
-        sys.exit(1)
 
 # Download alignment models
 languages = {self.config.alignment_languages}
@@ -329,22 +316,16 @@ print("✓ NLTK punkt_tab downloaded successfully")
         """Monitor SLURM job until completion."""
         Logger.log_step(9, f"Monitor SLURM job {job_id}", "STARTED")
         
-        Logger.log_info(f"Monitoring job: {job_id}")
-        Logger.log_info(f"Check interval: {self.config.check_interval_mins} minutes")
+        Logger.log_info(f"Job ID: {job_id}")
         
         while True:
             status = self.command_runner.check_slurm_job_status(job_id)
             
             if status in ["COMPLETED", "FAILED", "CANCELLED", "TIMEOUT"]:
-                Logger.log_info(f"")
-                Logger.log_info(f"{'='*80}")
-                Logger.log_info(f"  Job {job_id} finished with status: {status}")
-                Logger.log_info(f"{'='*80}")
-                Logger.log_info(f"")
+                Logger.log_info(f"Job {job_id} - Status: {status}")
                 break
             
-            Logger.log_info(f"Job {job_id} status: {status}")
-            Logger.log_info(f"Waiting {self.config.check_interval_mins} minutes before next check...")
+            Logger.log_info(f"Job {job_id} - Status: {status}")
             time.sleep(self.config.check_interval_mins * 60)
     
     def _upload_to_github(self):
