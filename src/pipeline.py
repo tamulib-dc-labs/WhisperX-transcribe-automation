@@ -294,8 +294,7 @@ print("NLTK punkt_tab downloaded successfully")
         
         # Inject language argument (or omit if None for auto-detection)
         if self.config.language:
-            language_arg = f'--language "{self.config.language}" \\
-    '
+            language_arg = f'--language "{self.config.language}" \\\n    '
         else:
             language_arg = ''
         slurm_content = slurm_content.replace("{{LANGUAGE_ARG}}", language_arg)
