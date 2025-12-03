@@ -4,6 +4,7 @@ File management utilities for the transcription pipeline.
 
 import os
 import sys
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -187,23 +188,34 @@ class CommandRunner:
                 check=True
             )
             
-            # Extract job ID from output (format: "Submitted batch job 12345")
+            # Show the sbatch output
             output = result.stdout.strip()
+            print(output)
             print(f"[DEBUG] sbatch output: '{output}'")
             
-            # Extract numeric job ID (last token should be the ID)
-            job_id = output.split()[-1]
-            print(f"[DEBUG] Extracted job_id: '{job_id}'")
-            print(f"✓ SLURM job submitted with ID: {job_id}")
-            sys.stdout.flush()
-            return job_id
+            # Extract job ID using regex (format: "Submitted batch job 12345")
+            match = re.search(r"Submitted batch job (\d+)", output)
+            
+            if match:
+                job_id = match.group(1)
+                print(f"[DEBUG] Extracted job_id from regex: '{job_id}'")
+                print(f"\n✓ SUCCESS: Job submitted. Detected Job ID: {job_id}")
+                sys.stdout.flush()
+                return job_id
+            else:
+                print(f"[DEBUG] Could not parse Job ID from sbatch output using regex")
+                print(f"ERROR: Could not parse Job ID from sbatch output.")
+                sys.stdout.flush()
+                return None
             
         except subprocess.CalledProcessError as e:
             print(f"Failed to submit SLURM job: {e}")
             print(f"Error output: {e.stderr}")
+            sys.stdout.flush()
             return None
         except Exception as e:
             print(f"Error submitting SLURM job: {e}")
+            sys.stdout.flush()
             return None
     
     @staticmethod
