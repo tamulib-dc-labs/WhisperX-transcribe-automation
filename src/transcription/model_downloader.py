@@ -34,10 +34,10 @@ class ModelDownloader:
                 return _original_torch_load(*args, **kwargs)
             
             torch.load = _patched_torch_load
-            print("✓ PyTorch 2.6+ compatibility patch applied: weights_only=False for all torch.load calls")
+            print("PyTorch 2.6+ compatibility patch applied: weights_only=False for all torch.load calls")
             sys.stdout.flush()
         except Exception as e:
-            print(f"⚠ WARNING: Failed to apply PyTorch compatibility patch: {e}")
+            print(f"WARNING: Failed to apply PyTorch compatibility patch: {e}")
             print("Model loading may fail on CPU nodes with PyTorch 2.6+")
             sys.stdout.flush()
     
@@ -97,11 +97,11 @@ class ModelDownloader:
         
         try:
             model = whisperx.load_model(model_name, device, compute_type=compute_type)
-            print(f"✓ WhisperX model '{model_name}' downloaded successfully!")
+            print(f"WhisperX model '{model_name}' downloaded successfully!")
             sys.stdout.flush()
             del model
         except Exception as e:
-            print(f"✗ Error downloading WhisperX model: {e}")
+            print(f"Error downloading WhisperX model: {e}")
             sys.stdout.flush()
             return False
         
@@ -112,11 +112,11 @@ class ModelDownloader:
                 print(f"  Downloading alignment model for '{lang}'...")
                 sys.stdout.flush()
                 align_model, metadata = whisperx.load_align_model(language_code=lang, device=device)
-                print(f"  ✓ Alignment model for '{lang}' downloaded!")
+                print(f"  Alignment model for '{lang}' downloaded!")
                 sys.stdout.flush()
                 del align_model
             except Exception as e:
-                print(f"  ✗ Could not download alignment for '{lang}': {e}")
+                print(f"  Could not download alignment for '{lang}': {e}")
                 sys.stdout.flush()
         
         print(f"\n{'='*60}")

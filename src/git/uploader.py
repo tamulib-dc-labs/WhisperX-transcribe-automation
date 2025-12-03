@@ -192,7 +192,7 @@ class GitUploader:
         if not self._run_git_command(["git", "push", "-u", "origin", branch_name]):
             return False
         
-        print(f"✓ SUCCESS! Pull Request URL: https://github.com/{self.owner}/{self.repo_name}/pull/new/{branch_name}")
+        print(f"SUCCESS! Pull Request URL: https://github.com/{self.owner}/{self.repo_name}/pull/new/{branch_name}")
         return True
     
     def upload(self) -> bool:
