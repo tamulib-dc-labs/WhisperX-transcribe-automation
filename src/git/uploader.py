@@ -54,7 +54,7 @@ class GitUploader:
             bool: True if successful
         """
         try:
-            subprocess.run(
+            result = subprocess.run(
                 args,
                 cwd=cwd or self.repo_folder,
                 check=True,
@@ -64,7 +64,11 @@ class GitUploader:
             return True
         except subprocess.CalledProcessError as e:
             print(f"Git command failed: {' '.join(args)}")
-            print(f"Error: {e.stderr}")
+            print(f"Return code: {e.returncode}")
+            if e.stdout:
+                print(f"stdout: {e.stdout}")
+            if e.stderr:
+                print(f"stderr: {e.stderr}")
             return False
     
     def setup_repository(self) -> bool:
