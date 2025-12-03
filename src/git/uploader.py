@@ -170,7 +170,7 @@ class GitUploader:
         """
         # Stage changes (only additions and modifications, no deletions)
         print("Staging changes (new and modified files only)...")
-        if not self._run_git_command(["git", "add", "--all", "--ignore-removal"]):
+        if not self._run_git_command(["git", "add", "."]):
             return False
         
         # Check if there are changes to commit
