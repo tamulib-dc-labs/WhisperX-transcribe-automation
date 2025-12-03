@@ -117,12 +117,12 @@ class PipelineConfig:
     @property
     def download_script_path(self) -> str:
         """Path to download automation script."""
-        return os.path.join(self.working_dir, "download_automation_3.py")
+        return os.path.join(self.working_dir, "legacy", "download_automation_3.py")
     
     @property
     def model_download_script_path(self) -> str:
-        """Path to model download script."""
-        return os.path.join(self.working_dir, "d_whisperx.py")
+        """Path to model download script (not used - ModelDownloader class used instead)."""
+        return os.path.join(self.working_dir, "legacy", "d_whisperx.py")
     
     @property
     def transcribe_script_path(self) -> str:
@@ -131,8 +131,8 @@ class PipelineConfig:
     
     @property
     def git_upload_script_path(self) -> str:
-        """Path to git upload script."""
-        return os.path.join(self.working_dir, "git_upload.py")
+        """Path to git upload script (not used - GitUploader class used instead)."""
+        return os.path.join(self.working_dir, "legacy", "git_upload.py")
     
     @property
     def slurm_job_path(self) -> str:

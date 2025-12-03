@@ -4,8 +4,6 @@ Model downloader for WhisperX models and alignment models.
 
 import os
 import sys
-import torch
-import whisperx
 from typing import List, Optional
 
 
@@ -20,12 +18,11 @@ class ModelDownloader:
             cache_dir: HuggingFace cache directory
         """
         self.cache_dir = cache_dir
-        
-        # Apply PyTorch 2.6+ compatibility patch
-        self._apply_pytorch_patch()
     
     def _apply_pytorch_patch(self):
         """Apply PyTorch 2.6+ compatibility patch for weights_only issue."""
+        import torch
+        
         try:
             torch.serialization.add_safe_globals = lambda x: None
             import functools
@@ -61,6 +58,13 @@ class ModelDownloader:
         Returns:
             bool: True if successful
         """
+        # Import torch and whisperx only when needed
+        import torch
+        import whisperx
+        
+        # Apply PyTorch compatibility patch before using models
+        self._apply_pytorch_patch()
+        
         # Set HF cache if provided
         if self.cache_dir:
             os.environ['HF_HOME'] = self.cache_dir
