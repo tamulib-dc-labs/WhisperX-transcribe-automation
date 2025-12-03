@@ -164,6 +164,10 @@ class GitUploader:
         Returns:
             bool: True if successful
         """
+        # Configure git user if not set
+        self._run_git_command(["git", "config", "user.email", "automation@example.com"])
+        self._run_git_command(["git", "config", "user.name", "Automation Bot"])
+        
         # Stage changes (only additions and modifications, no deletions)
         print("Staging changes (new and modified files only)...")
         if not self._run_git_command(["git", "add", "--all", "--ignore-removal"]):
