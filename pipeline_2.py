@@ -300,7 +300,9 @@ def main():
     
     # Step 3: Check/Create Virtual Environment
     venv_python = os.path.join(VENV_PATH, "bin", "python")
-    if not os.path.exists(venv_python):
+    venv_exists = os.path.exists(venv_python)
+    
+    if not venv_exists:
         log_step(3, "Create Python virtual environment", "STARTED")
         print(f"Virtual environment not found at {VENV_PATH}")
         print("Creating new virtual environment...")
@@ -311,6 +313,22 @@ def main():
             shell=True
         ):
             sys.exit(1)
+        
+        # Step 3.5: Install requirements.txt (only when venv is newly created)
+        log_step("3.5", "Install Python dependencies from requirements.txt", "STARTED")
+        requirements_file = os.path.join(WORKING_DIR, "requirements.txt")
+        if os.path.exists(requirements_file):
+            pip_cmd = os.path.join(VENV_PATH, "bin", "pip")
+            if not run_command(
+                f"{pip_cmd} install -r {requirements_file}",
+                "3.5",
+                "Install dependencies from requirements.txt",
+                shell=True
+            ):
+                print("Warning: Failed to install some dependencies. Continuing anyway...")
+            log_step("3.5", "Install Python dependencies from requirements.txt", "COMPLETED")
+        else:
+            print(f"Warning: requirements.txt not found at {requirements_file}")
     else:
         log_step(3, "Virtual environment already exists", "STARTED")
         print(f"Using existing virtual environment at {VENV_PATH}")
