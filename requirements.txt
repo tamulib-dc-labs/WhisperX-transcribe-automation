@@ -4,3 +4,4 @@ accelerate
 whisperx
 torch
 pandas
+smbprotocol
