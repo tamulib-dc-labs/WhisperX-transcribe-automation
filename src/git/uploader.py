@@ -164,11 +164,6 @@ class GitUploader:
         Returns:
             bool: True if successful
         """
-        # Configure git user
-        print("Configuring git user...")
-        self._run_git_command(["git", "config", "user.name", self.username])
-        self._run_git_command(["git", "config", "user.email", f"{self.username}@users.noreply.github.com"])
-        
         # Stage changes (only additions and modifications, no deletions)
         print("Staging changes (new and modified files only)...")
         if not self._run_git_command(["git", "add", "--all", "--ignore-removal"]):
@@ -176,7 +171,7 @@ class GitUploader:
         
         # Check if there are changes to commit
         result = subprocess.run(
-            ["git", "diff", "--cached", "--name-only"],
+            ["git", "status", "--porcelain"],
             cwd=self.repo_folder,
             capture_output=True,
             text=True
@@ -186,25 +181,10 @@ class GitUploader:
             print("No new changes found after copying. Nothing to push.")
             return True
         
-        print(f"Files staged for commit:")
-        print(result.stdout)
-        
         # Commit
         timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
         print("Committing...")
-        
-        # Try commit with more verbose error handling
-        commit_result = subprocess.run(
-            ["git", "commit", "-m", f"Upload via automation {timestamp}"],
-            cwd=self.repo_folder,
-            capture_output=True,
-            text=True
-        )
-        
-        if commit_result.returncode != 0:
-            print(f"Git commit failed with return code {commit_result.returncode}")
-            print(f"stdout: {commit_result.stdout}")
-            print(f"stderr: {commit_result.stderr}")
+        if not self._run_git_command(["git", "commit", "-m", f"Upload via automation {timestamp}"]):
             return False
         
         # Push
