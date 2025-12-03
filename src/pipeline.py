@@ -269,20 +269,39 @@ print("✓ NLTK punkt_tab downloaded successfully")
         
         # Submit job
         job_id = self.command_runner.submit_slurm_job(updated_slurm)
+        
+        if job_id:
+            Logger.log_info(f"")
+            Logger.log_info(f"{'='*80}")
+            Logger.log_info(f"  SLURM JOB SUBMITTED SUCCESSFULLY")
+            Logger.log_info(f"  Job ID: {job_id}")
+            Logger.log_info(f"{'='*80}")
+            Logger.log_info(f"")
+        else:
+            Logger.log_error("Failed to submit SLURM job")
+        
         return job_id
     
     def _monitor_slurm_job(self, job_id: str):
         """Monitor SLURM job until completion."""
         Logger.log_step(9, f"Monitor SLURM job {job_id}", "STARTED")
         
+        Logger.log_info(f"Monitoring job: {job_id}")
+        Logger.log_info(f"Check interval: {self.config.check_interval_mins} minutes")
+        
         while True:
             status = self.command_runner.check_slurm_job_status(job_id)
             
             if status in ["COMPLETED", "FAILED", "CANCELLED", "TIMEOUT"]:
-                Logger.log_info(f"Job {job_id} finished with status: {status}")
+                Logger.log_info(f"")
+                Logger.log_info(f"{'='*80}")
+                Logger.log_info(f"  Job {job_id} finished with status: {status}")
+                Logger.log_info(f"{'='*80}")
+                Logger.log_info(f"")
                 break
             
             Logger.log_info(f"Job {job_id} status: {status}")
+            Logger.log_info(f"Waiting {self.config.check_interval_mins} minutes before next check...")
             time.sleep(self.config.check_interval_mins * 60)
     
     def _upload_to_github(self):
