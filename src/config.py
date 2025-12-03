@@ -121,7 +121,7 @@ class PipelineConfig:
     
     @property
     def model_download_script_path(self) -> str:
-        """Path to model download script (not used - ModelDownloader class used instead)."""
+        """Path to model download script (legacy - pipeline uses inline venv script)."""
         return os.path.join(self.working_dir, "legacy", "d_whisperx.py")
     
     @property

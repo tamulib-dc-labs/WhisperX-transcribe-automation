@@ -19,7 +19,6 @@ from src.config import get_config
 from src.utils.file_manager import FileManager, CommandRunner
 from src.utils.logger import Logger
 from src.git.uploader import GitUploader
-from src.transcription.model_downloader import ModelDownloader
 
 
 class TranscriptionPipeline:
@@ -141,15 +140,88 @@ class TranscriptionPipeline:
             sys.exit(1)
     
     def _download_models(self):
-        """Download WhisperX models for offline use."""
+        """Download WhisperX models for offline use via venv."""
         Logger.log_step(7, "Download WhisperX models", "STARTED")
         
-        downloader = ModelDownloader(cache_dir=self.config.hf_cache)
-        if not downloader.download_models(
-            model_name=self.config.whisper_model,
-            languages=self.config.alignment_languages,
-            compute_type="int8"  # Use int8 for CPU download
-        ):
+        # Create a script to download models using the venv Python
+        download_script = f"""
+import os
+import sys
+
+# Set cache directories
+os.environ['HF_HOME'] = '{self.config.hf_cache}'
+os.environ['HF_HUB_OFFLINE'] = '0'
+os.makedirs('{self.config.hf_cache}', exist_ok=True)
+
+# Import after environment is set
+import torch
+import whisperx
+import functools
+
+# Apply PyTorch 2.6+ compatibility patch
+try:
+    torch.serialization.add_safe_globals = lambda x: None
+    _original_torch_load = torch.load
+    
+    @functools.wraps(_original_torch_load)
+    def _patched_torch_load(*args, **kwargs):
+        kwargs['weights_only'] = False
+        return _original_torch_load(*args, **kwargs)
+    
+    torch.load = _patched_torch_load
+    print("✓ PyTorch 2.6+ compatibility patch applied")
+    sys.stdout.flush()
+except Exception as e:
+    print(f"⚠ WARNING: Failed to apply PyTorch patch: {{e}}")
+    sys.stdout.flush()
+
+# Download models
+device = "cuda" if torch.cuda.is_available() else "cpu"
+compute_type = "int8"  # Safe for both CPU and GPU
+if device == "cpu":
+    print(f"Using CPU mode with compute_type={{compute_type}}")
+else:
+    print(f"Using GPU mode with compute_type={{compute_type}}")
+sys.stdout.flush()
+
+print(f"Downloading WhisperX model: {self.config.whisper_model}...")
+sys.stdout.flush()
+
+try:
+    model = whisperx.load_model("{self.config.whisper_model}", device, compute_type=compute_type)
+    print(f"✓ WhisperX model '{self.config.whisper_model}' downloaded successfully!")
+    sys.stdout.flush()
+    del model
+except Exception as e:
+    print(f"✗ Error downloading WhisperX model: {{e}}")
+    sys.stdout.flush()
+    sys.exit(1)
+
+# Download alignment models
+languages = {self.config.alignment_languages}
+print(f"\\nDownloading alignment models for languages: {{', '.join(languages)}}...")
+sys.stdout.flush()
+
+for lang in languages:
+    try:
+        print(f"  Downloading alignment model for '{{lang}}'...")
+        sys.stdout.flush()
+        align_model, metadata = whisperx.load_align_model(language_code=lang, device=device)
+        print(f"  ✓ Alignment model for '{{lang}}' downloaded!")
+        sys.stdout.flush()
+        del align_model
+    except Exception as e:
+        print(f"  ✗ Could not download alignment for '{{lang}}': {{e}}")
+        sys.stdout.flush()
+
+print(f"\\n{{'='*60}}")
+print(f"All models downloaded to: {self.config.hf_cache}")
+print(f"{{'='*60}}")
+"""
+        
+        # Run via venv Python
+        download_cmd = [self.config.venv_python, "-c", download_script]
+        if not self.command_runner.run(download_cmd, 7, "Download WhisperX models"):
             Logger.log_warning("Model download failed")
     
     def _download_nltk_data(self):
